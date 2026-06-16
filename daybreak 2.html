@@ -1,0 +1,1825 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="theme-color" content="#0E0B22" />
+<title>Daybreak</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --night:#0E0B22;
+    --night2:#1a1238;
+    --indigo:#241a4d;
+    --coral:#FF6B4A;
+    --gold:#FFC24B;
+    --cream:#FFF4E6;
+    --mint:#54E0A8;
+    --dim:rgba(255,244,230,.55);
+    --line:rgba(255,244,230,.12);
+    --display:'Bricolage Grotesque', system-ui, sans-serif;
+    --ui:'Space Grotesk', system-ui, sans-serif;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    font-family:var(--ui);
+    color:var(--cream);
+    background:var(--night);
+    overflow:hidden;
+    position:fixed;
+    inset:0;
+    user-select:none;
+    -webkit-user-select:none;
+  }
+
+  /* ---- the sky: the signature animated background ---- */
+  #sky{
+    position:fixed; inset:0; z-index:0;
+    background:
+      radial-gradient(120% 90% at 50% 118%, var(--gold) 0%, var(--coral) 16%, transparent 46%),
+      linear-gradient(180deg, var(--night) 0%, var(--night2) 38%, var(--indigo) 100%);
+    background-size:100% 100%;
+    transition:opacity .6s ease;
+    --dawn:0; /* 0 night -> 1 day, driven by JS */
+  }
+  /* dawn layer rises with progress */
+  #dawn{
+    position:fixed; inset:0; z-index:0; pointer-events:none;
+    background:radial-gradient(140% 100% at 50% 120%, var(--gold) 0%, var(--coral) 30%, transparent 60%);
+    opacity:var(--dawn,0);
+    transition:opacity .5s ease;
+  }
+  #stars{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:calc(1 - var(--dawn,0))}
+
+  .app{position:relative;z-index:2;height:100%;display:flex;flex-direction:column;
+    max-width:560px;margin:0 auto;padding:calc(env(safe-area-inset-top) + 22px) 22px calc(env(safe-area-inset-bottom) + 22px)}
+
+  .screen{flex:1;display:none;flex-direction:column;animation:fade .45s ease;
+    overflow-y:auto;-webkit-overflow-scrolling:touch}
+  .screen.active{display:block}
+  @keyframes fade{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+
+  .brand{font-family:var(--display);font-weight:800;letter-spacing:-.02em;font-size:15px;
+    display:flex;align-items:center;gap:8px;text-transform:lowercase}
+  .brand .dot{width:9px;height:9px;border-radius:50%;background:linear-gradient(var(--gold),var(--coral));box-shadow:0 0 14px var(--coral)}
+  .topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+  .streak{font-size:13px;color:var(--dim);font-weight:500}
+  .streak b{color:var(--gold)}
+
+  /* ---------- SETUP ---------- */
+  .hero{margin:26px 0 8px}
+  .eyebrow{font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:var(--coral);font-weight:600;margin-bottom:14px}
+  .h1{font-family:var(--display);font-weight:800;font-size:clamp(34px,11vw,48px);line-height:.98;letter-spacing:-.03em}
+  .sub{color:var(--dim);margin-top:12px;font-size:15px;line-height:1.5;max-width:34ch}
+
+  .timeset{margin:30px 0 8px;display:flex;align-items:baseline;gap:6px;justify-content:center}
+  .timeinput{font-family:var(--display);font-weight:800;font-size:clamp(56px,20vw,88px);background:none;border:none;color:var(--cream);
+    text-align:center;letter-spacing:-.03em;outline:none;width:auto;font-variant-numeric:tabular-nums}
+  input[type=time]::-webkit-calendar-picker-indicator{filter:invert(.8);opacity:.4;cursor:pointer}
+
+  .card{background:rgba(255,244,230,.04);border:1px solid var(--line);border-radius:20px;padding:18px;margin-bottom:14px}
+  .card h3{font-family:var(--display);font-weight:600;font-size:16px;margin-bottom:4px}
+  .card .note{font-size:12.5px;color:var(--dim);line-height:1.45}
+
+  .grouplabel{font-size:11.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);font-weight:600;margin-top:18px}
+  .hintpill{font-size:10px;letter-spacing:.03em;background:rgba(255,244,230,.1);color:var(--dim);padding:2px 8px;border-radius:999px;text-transform:none;font-weight:600;margin-left:6px}
+  .chips{display:flex;flex-wrap:wrap;gap:9px;margin-top:12px}
+  .chip{font-family:var(--ui);font-weight:600;font-size:14px;padding:9px 14px;border-radius:999px;
+    background:rgba(255,244,230,.06);border:1px solid var(--line);color:var(--dim);cursor:pointer;transition:.18s;display:flex;gap:7px;align-items:center}
+  .chip.on{background:linear-gradient(135deg,rgba(255,107,74,.22),rgba(255,194,75,.18));border-color:var(--coral);color:var(--cream)}
+  .chip:active{transform:scale(.95)}
+
+  .row{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:11px 0;border-top:1px solid var(--line)}
+  .row:first-of-type{border-top:none}
+  .row label{font-size:14.5px;font-weight:500}
+  .stepper{display:flex;align-items:center;gap:0;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+  .stepper button{background:rgba(255,244,230,.05);border:none;color:var(--cream);width:38px;height:38px;font-size:20px;font-family:var(--ui);cursor:pointer}
+  .stepper button:active{background:var(--coral)}
+  .stepper span{min-width:46px;text-align:center;font-weight:700;font-variant-numeric:tabular-nums}
+
+  .btn{font-family:var(--display);font-weight:800;font-size:18px;letter-spacing:-.01em;border:none;border-radius:18px;padding:18px;
+    width:100%;cursor:pointer;color:#190a05;background:linear-gradient(135deg,var(--gold),var(--coral));
+    box-shadow:0 12px 30px -8px rgba(255,107,74,.6);transition:.15s}
+  .btn:active{transform:translateY(2px);box-shadow:0 6px 16px -8px rgba(255,107,74,.6)}
+  .btn:disabled{background:rgba(255,244,230,.08);color:var(--dim);box-shadow:none;cursor:not-allowed;transform:none}
+  .btn.ghost{background:none;color:var(--dim);box-shadow:none;border:1px solid var(--line);font-weight:600;font-size:15px;padding:14px}
+  .spacer{flex:1}
+  .footnote{font-size:11.5px;color:var(--dim);text-align:center;margin-top:14px;line-height:1.5}
+  .footnote b{color:var(--cream)}
+  details{margin-top:10px}
+  summary{font-size:13px;color:var(--coral);cursor:pointer;font-weight:600;list-style:none}
+  summary::-webkit-details-marker{display:none}
+  details .body{font-size:12.5px;color:var(--dim);line-height:1.6;margin-top:10px;padding-left:2px}
+  details ol{margin-left:18px}
+  code{background:rgba(255,244,230,.1);padding:1px 6px;border-radius:6px;font-size:11.5px}
+
+  /* ---------- ORB (shared signature) ---------- */
+  .orbwrap{min-height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:8px;padding:26px 0 8px}
+  .orb{position:relative;width:min(62vw,260px);aspect-ratio:1;border-radius:50%;display:grid;place-items:center;
+    background:radial-gradient(circle at 50% 38%, var(--gold), var(--coral) 62%, #c0392b 100%);
+    box-shadow:0 0 0 0 rgba(255,107,74,.55), 0 0 90px 6px rgba(255,107,74,.45);}
+  .orb .num{font-family:var(--display);font-weight:800;font-size:clamp(54px,17vw,76px);color:#190a05;line-height:1;font-variant-numeric:tabular-nums}
+  .orb .lab{font-family:var(--ui);font-weight:600;font-size:13px;color:rgba(25,10,5,.7);letter-spacing:.05em;text-transform:uppercase}
+  .ringing .orb{animation:throb .85s ease-in-out infinite}
+  @keyframes throb{0%,100%{box-shadow:0 0 0 0 rgba(255,107,74,.55),0 0 90px 6px rgba(255,107,74,.45);transform:scale(1)}
+    50%{box-shadow:0 0 0 26px rgba(255,107,74,0),0 0 120px 18px rgba(255,107,74,.6);transform:scale(1.045)}}
+
+  .bigtime{font-family:var(--display);font-weight:800;font-size:clamp(40px,13vw,60px);letter-spacing:-.03em;margin-bottom:2px;font-variant-numeric:tabular-nums}
+  .ringlabel{font-size:13px;letter-spacing:.22em;text-transform:uppercase;color:var(--gold);font-weight:600}
+  .prompt{font-family:var(--display);font-weight:600;font-size:clamp(22px,6vw,28px);line-height:1.12;margin:4px 0 2px;letter-spacing:-.01em}
+  .promptsub{color:var(--dim);font-size:14px;line-height:1.5;max-width:30ch}
+
+  /* camera */
+  video,.shot{width:min(78vw,320px);aspect-ratio:3/4;object-fit:cover;border-radius:22px;background:#000;border:1px solid var(--line)}
+  .hidden{display:none!important}
+
+  /* progress bar */
+  .pbar{width:100%;max-width:320px;height:10px;border-radius:999px;background:rgba(255,244,230,.1);overflow:hidden;margin-top:4px}
+  .pbar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--gold),var(--coral));border-radius:999px;transition:width .25s}
+
+  .toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom) + 24px);transform:translateX(-50%);
+    background:rgba(14,11,34,.92);border:1px solid var(--line);color:var(--cream);padding:11px 18px;border-radius:14px;
+    font-size:13.5px;font-weight:500;z-index:50;opacity:0;pointer-events:none;transition:.3s;max-width:84vw;text-align:center}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+  .stack{display:flex;flex-direction:column;gap:10px;width:100%;max-width:340px;margin-top:18px}
+
+  /* math snooze */
+  .mathq{font-family:var(--display);font-weight:800;font-size:clamp(40px,12vw,56px);letter-spacing:-.02em}
+  .mathin{font-family:var(--display);font-weight:800;font-size:40px;width:160px;text-align:center;background:rgba(255,244,230,.06);
+    border:1px solid var(--line);border-radius:16px;color:var(--cream);padding:8px;outline:none;font-variant-numeric:tabular-nums}
+  .mathin:focus{border-color:var(--coral)}
+
+  .success .orb{animation:rise 1s cubic-bezier(.2,.8,.2,1) both}
+  @keyframes rise{from{transform:translateY(40px) scale(.8);opacity:.4}to{transform:none;opacity:1}}
+
+  .tinybtn{background:none;border:none;color:var(--dim);font-family:var(--ui);font-size:13px;font-weight:600;cursor:pointer;padding:8px;text-decoration:underline}
+  .lvlsel{font-family:var(--ui);font-weight:600;font-size:14px;color:var(--cream);background:rgba(255,244,230,.06);
+    border:1px solid var(--line);border-radius:12px;padding:9px 12px;outline:none;appearance:none;-webkit-appearance:none;cursor:pointer}
+  .lvlsel:focus{border-color:var(--coral)}
+  .lvlsel option{background:#1a1238;color:var(--cream)}
+  .padgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;width:min(68vw,260px);aspect-ratio:1;margin:8px 0}
+  .pad{border-radius:20px;border:1px solid rgba(255,244,230,.14);opacity:.3;transition:opacity .1s,transform .1s,box-shadow .1s;cursor:pointer}
+  .pad.lit{opacity:1;transform:scale(.95);box-shadow:0 0 34px -4px currentColor}
+
+  /* wake-time card */
+  .wakecard{position:relative;display:flex;flex-direction:column;gap:8px;
+    background:rgba(255,244,230,.05);border:1px solid var(--line);border-radius:22px;padding:16px 20px;margin:24px 0 14px}
+  .wakecard:focus-within{border-color:var(--coral)}
+  .wakelabel{font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--coral);font-weight:600}
+  .timefield{font-family:var(--display);font-weight:800;font-size:clamp(34px,11vw,46px);letter-spacing:-.02em;line-height:1.05;
+    color:var(--cream);background:transparent;border:none;outline:none;padding:0;width:100%;font-variant-numeric:tabular-nums;-webkit-appearance:none;appearance:none}
+  .timefield::-webkit-date-and-time-value{text-align:left}
+  .timefield::-webkit-calendar-picker-indicator{opacity:0;width:0;display:none}
+
+  /* stats + calendar */
+  .statcard{padding:18px}
+  .statrow{display:flex;align-items:center;gap:18px}
+  .stat{display:flex;flex-direction:column}
+  .statbig{font-family:var(--display);font-weight:800;font-size:30px;line-height:1;font-variant-numeric:tabular-nums}
+  .statlab{font-size:12px;color:var(--dim);font-weight:500;margin-top:3px}
+  .shopbtn{margin-left:auto;font-family:var(--ui);font-weight:700;font-size:14px;color:var(--gold);background:rgba(255,194,75,.12);
+    border:1px solid rgba(255,194,75,.35);border-radius:12px;padding:10px 16px;cursor:pointer}
+  .shopbtn:active{transform:scale(.96)}
+  .calhead{font-family:var(--display);font-weight:800;font-size:14px;margin-top:16px;margin-bottom:8px;text-align:center}
+  .cal{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}
+  .cdow{text-align:center;font-size:9px;color:var(--dim);font-weight:700;padding-bottom:2px}
+  .cell{aspect-ratio:1;border-radius:6px;background:rgba(255,244,230,.06);display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--dim);font-weight:600}
+  .cell.empty{background:none}
+  .cell.future{opacity:.4}
+  .cell.done{background:linear-gradient(135deg,var(--gold),var(--coral));color:#190a05}
+  .cell.frozen{background:#5a7bd1;color:#fff}
+  .cell.today{outline:2px solid var(--cream);outline-offset:-2px;color:var(--cream)}
+  .cell.today.done{color:#190a05}
+  .wakestats{width:100%;max-width:320px;margin:14px auto 0;display:flex;flex-direction:column;gap:7px}
+  .ws{display:flex;justify-content:space-between;gap:12px;font-size:13px;background:rgba(255,244,230,.05);border:1px solid var(--line);border-radius:12px;padding:9px 13px}
+  .ws span{color:var(--dim)}
+  .ws b{color:var(--cream);text-align:right;font-weight:600}
+  .lifestats{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:14px}
+  .ls{background:rgba(255,244,230,.05);border:1px solid var(--line);border-radius:12px;padding:10px 12px;text-align:center}
+  .ls b{font-family:var(--display);font-weight:800;font-size:20px;display:block;line-height:1}
+  .ls span{font-size:11px;color:var(--dim)}
+  .callegend{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:11px;color:var(--dim);margin-top:12px}
+  .dotleg{width:11px;height:11px;border-radius:3px;display:inline-block;margin-left:8px}
+  .dotleg.done{background:linear-gradient(135deg,var(--gold),var(--coral))}
+  .dotleg.frozen{background:#5a7bd1}
+  .dotleg.miss{background:rgba(255,244,230,.12)}
+  .badges{display:flex;gap:10px;margin-top:14px}
+  .badge{font-size:22px;filter:grayscale(1);opacity:.35;transition:.2s}
+  .badge.got{filter:none;opacity:1;text-shadow:0 0 12px var(--coral)}
+  .buybtn.equip{background:rgba(255,244,230,.1);color:var(--cream);border:1px solid var(--coral)}
+  .posewrap{position:relative;width:min(86vw,380px);aspect-ratio:4/3;border-radius:20px;overflow:hidden;border:1px solid var(--line);background:#000}
+  .posewrap video,.posewrap canvas{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+  .repbadge{position:absolute;top:10px;left:10px;background:rgba(14,11,34,.72);padding:6px 12px;border-radius:12px;
+    font-family:var(--display);font-weight:800;font-size:26px;color:var(--cream);display:flex;align-items:baseline;gap:4px;z-index:3}
+  .repbadge small{font-size:13px;color:var(--dim);font-weight:600}
+  /* skeleton shimmer */
+  .skel{position:absolute;inset:0;z-index:2;border-radius:inherit;
+    background:linear-gradient(100deg, rgba(255,244,230,.05) 30%, rgba(255,244,230,.16) 50%, rgba(255,244,230,.05) 70%);
+    background-size:200% 100%;animation:shimmer 1.2s linear infinite;display:flex;align-items:center;justify-content:center;
+    font-size:13px;color:var(--cream);font-weight:600}
+  @keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+  /* preview modal */
+  .modal{position:fixed;inset:0;z-index:60;background:rgba(8,6,20,.78);display:none;align-items:center;justify-content:center;padding:24px}
+  .modal.show{display:flex;animation:fade .25s ease}
+  .modalcard{background:#161033;border:1px solid var(--line);border-radius:24px;padding:24px;max-width:360px;width:100%;text-align:center;position:relative}
+  .modalcard h3{font-family:var(--display);font-weight:800;font-size:22px;margin-bottom:4px}
+  .modalcard p{color:var(--dim);font-size:13.5px;line-height:1.5}
+  .modalclose{position:absolute;top:12px;right:16px;background:none;border:none;color:var(--dim);font-size:26px;cursor:pointer;line-height:1}
+  .previewSky{height:150px;border-radius:18px;margin:14px 0;display:flex;align-items:center;justify-content:center;overflow:hidden}
+  .previewOrb{width:80px;height:80px;border-radius:50%;box-shadow:0 0 40px -6px rgba(0,0,0,.5)}
+  .previewGlyph{font-size:66px}
+  /* in-context phone mockup */
+  .phoneMock{width:172px;height:312px;border-radius:30px;margin:16px auto;position:relative;overflow:hidden;border:4px solid #000;
+    background:radial-gradient(120% 80% at 50% 120%, var(--mg) 0%, var(--mc) 16%, transparent 48%), linear-gradient(180deg, var(--mn), var(--mi));
+    padding:18px 15px;text-align:left;box-shadow:0 12px 34px rgba(0,0,0,.55)}
+  .pmTop{font-family:var(--display);font-weight:800;font-size:9px;color:#FFF4E6;opacity:.92;display:flex;gap:4px;align-items:center}
+  .pmTop::before{content:'';width:6px;height:6px;border-radius:50%;background:linear-gradient(var(--mg),var(--mc))}
+  .pmEye{font-size:6.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--mc);font-weight:800;margin-top:26px}
+  .pmTitle{font-family:var(--display);font-weight:800;font-size:21px;color:#FFF4E6;line-height:.95;margin-top:6px;letter-spacing:-.02em}
+  .pmOrb{width:78px;height:78px;border-radius:50%;margin:20px auto 0;display:flex;align-items:center;justify-content:center;font-size:48px}
+  .pmTime{font-family:var(--display);font-weight:800;font-size:17px;color:#FFF4E6;text-align:center;margin-top:12px;opacity:.95}
+
+  /* ===== rendered sun skins (scenes) ===== */
+  .sunOrb{position:relative;background:none!important;box-shadow:none!important;overflow:visible}
+  .ringing .sunOrb{animation:none}
+  .sunOrb>div{position:absolute;border-radius:50%;pointer-events:none}
+  .sunOrb .s-aura{inset:-6%;background:radial-gradient(circle, var(--glow) 0%, transparent 62%);opacity:.5;animation:sunpulse 2.8s ease-in-out infinite}
+  .sunOrb .s-scene{inset:7%;overflow:hidden;box-shadow:0 0 55px -4px var(--glow), inset 0 0 26px rgba(0,0,0,.45)}
+  .sunOrb .s-scene>*{position:absolute}
+  .sunOrb .s-scene .sky{inset:0;border-radius:0}
+  .sunOrb .s-rays{inset:-14%;opacity:0;mix-blend-mode:screen;
+    background:conic-gradient(from 0deg, transparent 0 7deg, var(--glow) 8deg 11deg, transparent 12deg 37deg, var(--glow) 38deg 41deg, transparent 42deg 67deg, var(--glow) 68deg 71deg, transparent 72deg 97deg, var(--glow) 98deg 101deg, transparent 102deg);
+    -webkit-mask:radial-gradient(circle, transparent 47%, #000 50%); mask:radial-gradient(circle, transparent 47%, #000 50%)}
+  .sunOrb .s-ring{inset:-15%;border:2px solid var(--glow);border-top-color:transparent;border-bottom-color:transparent;opacity:0}
+  @keyframes sunpulse{0%,100%{transform:scale(1);opacity:.45}50%{transform:scale(1.07);opacity:.8}}
+  @keyframes sunspin{to{transform:rotate(360deg)}}
+  .sunOrb.rar-epic .s-rays{opacity:.4;animation:sunspin 18s linear infinite}
+  .sunOrb.rar-mythic .s-rays{opacity:.6;animation:sunspin 12s linear infinite}
+  .sunOrb.rar-legendary .s-rays{opacity:.85;animation:sunspin 8s linear infinite}
+  .sunOrb.rar-legendary .s-ring{opacity:.85;animation:sunspin 5s linear infinite}
+
+  /* scene elements */
+  .s-scene .star{position:absolute;background:#fff;border-radius:50%;animation:twinkle 2s ease-in-out infinite}
+  @keyframes twinkle{0%,100%{opacity:.3}50%{opacity:1}}
+  .s-scene .cmoon{width:34%;height:34%;left:18%;top:16%;border-radius:50%;background:radial-gradient(circle at 38% 35%,#fff,#c4cde8 70%);box-shadow:inset -6px -4px 0 rgba(120,130,170,.35),0 0 18px #cdd6ff}
+  .s-scene .cmoon.sm{width:22%;height:22%;left:60%;top:14%}
+  .s-scene .csun{width:42%;height:42%;left:29%;top:26%;border-radius:50%;background:radial-gradient(circle at 50% 42%,#fff7d6,#ffb347 60%,#ff7a1a);box-shadow:0 0 26px #ffae42}
+  .s-scene .csun.lowsun{top:30%}
+  .s-scene .csun.bigsun{width:60%;height:60%;left:20%;top:20%;background:radial-gradient(circle at 50% 45%,#fff6d0,#ff9a1a 55%,#ff5500);box-shadow:0 0 30px #ff8a1a;animation:sunpulse 2.4s ease-in-out infinite}
+  .s-scene .cloud{height:9%;border-radius:999px;background:rgba(255,255,255,.85);filter:blur(.5px)}
+  .s-scene .cloud.c1{width:46%;left:8%;top:58%;animation:drift 9s linear infinite}
+  .s-scene .cloud.c2{width:34%;left:52%;top:70%;animation:drift 13s linear infinite reverse}
+  @keyframes drift{0%{transform:translateX(-12%)}50%{transform:translateX(12%)}100%{transform:translateX(-12%)}}
+  .s-scene svg.city,.s-scene svg.mount{left:0;bottom:0;width:100%;height:48%;border-radius:0}
+  .s-scene svg.mount{height:40%}
+  .s-scene .wave{left:-10%;width:120%;height:16%;border-radius:50%;background:rgba(255,255,255,.18);box-shadow:0 0 12px rgba(255,255,255,.25)}
+  .s-scene .wave.w1{bottom:6%;animation:wavemove 3.5s ease-in-out infinite}
+  .s-scene .wave.w2{bottom:18%;opacity:.7;animation:wavemove 4.5s ease-in-out infinite reverse}
+  .s-scene .wave.w3{bottom:30%;opacity:.45;animation:wavemove 5.5s ease-in-out infinite}
+  @keyframes wavemove{0%,100%{transform:translateX(-8%)}50%{transform:translateX(8%)}}
+  .s-scene .flame{left:18%;bottom:-14%;width:64%;height:80%;border-radius:50% 50% 46% 46%;
+    background:radial-gradient(circle at 50% 75%, #fff3b0, #ff9a1a 40%, #ff3b1a 70%, transparent 78%);
+    filter:blur(2px);animation:flick .28s ease-in-out infinite alternate;transform-origin:50% 100%}
+  .s-scene .flame.big{width:78%;left:11%;height:96%}
+  .s-scene .flame.f2{left:34%;width:46%;animation-duration:.22s;opacity:.85}
+  @keyframes flick{0%{transform:scaleY(1) scaleX(1) translateX(0)}100%{transform:scaleY(1.08) scaleX(.94) translateX(2%)}}
+  .s-scene .ember{width:4px;height:4px;border-radius:50%;background:#ffb347;box-shadow:0 0 6px #ff8a1a;bottom:-6%}
+  .s-scene .ember.e1{left:24%;animation:rise 2.1s linear infinite}
+  .s-scene .ember.e2{left:46%;animation:rise 2.7s linear infinite .4s}
+  .s-scene .ember.e3{left:62%;animation:rise 2.3s linear infinite .9s}
+  .s-scene .ember.e4{left:36%;animation:rise 3.1s linear infinite 1.3s}
+  .s-scene .ember.e5{left:70%;animation:rise 2.5s linear infinite .6s}
+  @keyframes rise{0%{transform:translateY(0) scale(1);opacity:0}15%{opacity:1}100%{transform:translateY(-260%) scale(.4);opacity:0}}
+  .s-scene .spiral{inset:6%;border-radius:50%;background:conic-gradient(from 0deg,transparent,#b388ff44 20%,transparent 40%,#5e7bff44 60%,transparent 80%,transparent);animation:sunspin 16s linear infinite}
+  .s-scene .aband{left:-10%;width:120%;height:42%;top:14%;filter:blur(5px);opacity:.7;border-radius:50%}
+  .s-scene .aband.a1{background:linear-gradient(90deg,transparent,#54e0a8,transparent);animation:awave 5s ease-in-out infinite}
+  .s-scene .aband.a2{top:30%;background:linear-gradient(90deg,transparent,#7a5bff,transparent);animation:awave 7s ease-in-out infinite reverse}
+  @keyframes awave{0%,100%{transform:translateX(-10%) skewX(-8deg)}50%{transform:translateX(10%) skewX(8deg)}}
+  .s-scene .flare{inset:8%;border-radius:50%;mix-blend-mode:screen;background:conic-gradient(from 0deg,transparent 0 18deg,#ffd98a88 20deg 24deg,transparent 26deg 60deg)}
+  .s-scene .flare.f1{animation:sunspin 9s linear infinite}
+  .s-scene .flare.f2{animation:sunspin 14s linear infinite reverse;opacity:.7}
+  .s-scene .sky.neb{inset:0;background:conic-gradient(from 0deg,#ff5bc0,#8a5bff,#5e7bff,#ff5bc0);filter:blur(4px);animation:sunspin 16s linear infinite}
+  .s-scene .sky.prism{inset:0;background:conic-gradient(from 0deg,#ff5b5b,#ffc24b,#54e0a8,#4d8bff,#b15bff,#ff5b5b);animation:sunspin 7s linear infinite}
+  .s-scene .prismShine{inset:0;background:radial-gradient(circle at 35% 30%,rgba(255,255,255,.7),transparent 40%);mix-blend-mode:screen;animation:twinkle 1.4s ease-in-out infinite}
+  .s-scene .cometObj{width:8px;height:8px;border-radius:50%;background:#eaf4ff;box-shadow:0 0 10px #bfe0ff,-22px 14px 24px 2px rgba(190,224,255,.5);left:14%;top:18%;animation:streak 3.2s ease-in infinite}
+  @keyframes streak{0%{transform:translate(-30%,-30%);opacity:0}20%{opacity:1}80%{opacity:1}100%{transform:translate(420%,300%);opacity:0}}
+  /* rarity tag pill */
+  .rar{display:inline-block;font-size:9px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;border:1px solid;border-radius:999px;padding:1px 6px;vertical-align:middle}
+  .shopitem.rb-legendary{border-color:rgba(255,194,75,.45)}
+  .shopitem.rb-mythic{border-color:rgba(255,91,192,.35)}
+  .shopitem.rb-epic{border-color:rgba(177,91,255,.3)}
+  .modalbtn{font-family:var(--display);font-weight:800;font-size:16px;border:none;border-radius:14px;padding:13px;width:100%;margin-top:8px;cursor:pointer;color:#190a05;background:linear-gradient(135deg,var(--gold),var(--coral))}
+  .modalbtn.alt{background:rgba(255,244,230,.08);color:var(--cream);border:1px solid var(--line)}
+  .acts{display:flex;flex-direction:column;gap:6px;align-items:flex-end;flex:none}
+  .prevbtn{background:rgba(255,244,230,.08);border:1px solid var(--line);color:var(--cream);border-radius:10px;padding:7px 11px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap}
+  .prevbtn:active{transform:scale(.95)}
+  .deal{font-size:11px;color:var(--mint);font-weight:800;background:rgba(84,224,168,.15);padding:1px 7px;border-radius:999px}
+  .raretag{font-size:10px;color:var(--gold);font-weight:800;letter-spacing:.04em}
+  .shopitem.rare{border-color:var(--gold);box-shadow:0 0 20px -6px var(--gold)}
+  .wasprice{font-size:11px;color:var(--dim);text-decoration:line-through;margin-right:4px}
+
+  /* shop items */
+  .shopitem{display:flex;align-items:center;gap:14px;background:rgba(255,244,230,.04);border:1px solid var(--line);border-radius:18px;padding:16px;margin-bottom:12px}
+  .shopitem .ico{font-size:30px}
+  .shopitem .info{flex:1}
+  .shopitem .iname{font-family:var(--display);font-weight:600;font-size:16px}
+  .shopitem .idesc{font-size:12.5px;color:var(--dim);line-height:1.4;margin-top:2px}
+  .buybtn{font-family:var(--ui);font-weight:700;font-size:14px;border:none;border-radius:12px;padding:11px 16px;cursor:pointer;
+    color:#190a05;background:linear-gradient(135deg,var(--gold),var(--coral));white-space:nowrap}
+  .buybtn:disabled{background:rgba(255,244,230,.1);color:var(--dim);cursor:not-allowed}
+  .owned{font-size:12px;color:var(--mint);font-weight:600;white-space:nowrap}
+
+  /* sign toggle for negative answers */
+  .mathentry{display:flex;align-items:center;gap:10px;justify-content:center}
+  .signbtn{font-family:var(--display);font-weight:800;font-size:28px;width:58px;height:58px;border-radius:16px;
+    border:1px solid var(--line);background:rgba(255,244,230,.06);color:var(--cream);cursor:pointer;flex:none}
+  .signbtn.neg{background:var(--coral);color:#190a05;border-color:var(--coral)}
+</style>
+</head>
+<body>
+<div id="sky"></div>
+<canvas id="stars"></canvas>
+<div id="dawn"></div>
+
+<div class="app">
+
+  <!-- ========== ONBOARDING ========== -->
+  <section id="s-onboard" class="screen">
+    <div class="orbwrap">
+      <div class="orb sunOrb" id="onboardOrb" style="width:min(44vw,170px)"></div>
+      <div class="eyebrow" style="margin-top:20px">welcome to</div>
+      <div class="h1" style="font-size:clamp(36px,13vw,54px)">Daybreak</div>
+      <div class="sub" style="text-align:center;margin-top:10px">The alarm that makes you <i>earn</i> waking up. Let's set up your profile.</div>
+      <div class="card" style="width:100%;max-width:360px;margin-top:22px;text-align:left">
+        <div class="wakelabel">What should I call you?</div>
+        <input id="obName" class="lvlsel" style="width:100%;margin-top:8px" maxlength="16" placeholder="your name" />
+      </div>
+      <div class="card" style="width:100%;max-width:360px;text-align:left">
+        <div class="wakelabel">When do you want to wake up?</div>
+        <input type="time" id="obTime" class="timefield" value="07:00" style="font-size:clamp(28px,9vw,40px)" />
+      </div>
+      <div class="stack" style="max-width:360px">
+        <button class="btn" id="obStart">Let's go →</button>
+      </div>
+      <div class="footnote">Your streak, coins, and unlocks save right here on this device.</div>
+    </div>
+  </section>
+
+  <!-- ========== SETUP ========== -->
+  <section id="s-setup" class="screen active">
+    <div class="topbar">
+      <div class="brand"><span class="dot"></span>daybreak</div>
+      <div class="streak">🔥 <b id="streakNum">0</b> day streak</div>
+    </div>
+
+    <div class="hero">
+      <div class="eyebrow" id="homeEyebrow">no mercy mornings</div>
+      <div class="h1">Get up.<br>For real this time.</div>
+    </div>
+
+    <div class="wakecard" id="wakeCard">
+      <div class="wakelabel">Wake me at</div>
+      <input type="time" id="alarmTime" class="timefield" value="07:00" />
+    </div>
+
+    <div class="card statcard">
+      <div class="statrow">
+        <div class="stat"><div class="statbig" id="cStreak">0</div><div class="statlab">🔥 day streak</div></div>
+        <div class="stat"><div class="statbig" id="cCoins">0</div><div class="statlab">🪙 sun coins</div></div>
+        <button class="shopbtn" id="shopBtn">Shop →</button>
+      </div>
+      <div class="calhead" id="calMonth"></div>
+      <div class="cal" id="cal"></div>
+      <div class="lifestats" id="lifeStats"></div>
+      <div class="badges" id="badges"></div>
+      <div class="callegend"><span class="dotleg done"></span>woke up <span class="dotleg frozen"></span>freeze used <span class="dotleg miss"></span>missed</div>
+    </div>
+
+    <div class="card">
+      <h3>Your wake-up gauntlet</h3>
+      <div class="note">One enabled challenge is picked at random each morning.</div>
+      <div class="grouplabel">Needs your camera or some movement</div>
+      <div class="chips" id="chipsPhysical"></div>
+      <div class="grouplabel">No-equipment backups <span class="hintpill">phone only</span></div>
+      <div class="note" style="margin-top:2px">Switch these on for mornings you wake up with nothing but your phone — no camera, no floor space needed.</div>
+      <div class="chips" id="chipsBackup"></div>
+    </div>
+
+    <div class="card">
+      <div class="row">
+        <label>Reps per exercise</label>
+        <div class="stepper" data-key="reps">
+          <button data-d="-1">−</button><span id="v-reps">10</span><button data-d="1">+</button>
+        </div>
+      </div>
+      <div class="row">
+        <label>Snoozes allowed</label>
+        <div class="stepper" data-key="snoozes">
+          <button data-d="-1">−</button><span id="v-snoozes">1</span><button data-d="1">+</button>
+        </div>
+      </div>
+      <div class="row">
+        <label>Math level</label>
+        <select id="mathLevel" class="lvlsel">
+          <option value="mult">Mental math (×)</option>
+          <option value="prealg">Pre-algebra (solve x)</option>
+          <option value="algebra">Algebra 1 (linear + quadratics)</option>
+        </select>
+      </div>
+      <div class="note" style="margin-top:8px">Each snooze is shorter than the last and you'll solve a math problem to earn it. Set to 0 for hard mode. Math level also sets the difficulty of the Brain wake-up challenge.</div>
+    </div>
+
+    <button class="btn" id="armBtn">Arm alarm</button>
+    <button class="btn ghost" id="testBtn" style="margin-top:10px">Test it now →</button>
+    <button class="btn ghost" id="workoutBtn" style="margin-top:10px">💪 Workout for coins (3–5 each)</button>
+
+    <details>
+      <summary>⚡ Auto-open when your phone alarm rings (iPhone)</summary>
+      <div class="body">
+        <ol>
+          <li>Open the <b>Shortcuts</b> app → <b>Automation</b> → <b>＋</b></li>
+          <li>Pick <b>Alarm</b> → <b>Is Stopped</b> (or set a Time of Day trigger)</li>
+          <li>Add action <b>Open URLs</b> and paste this page's link with <code>?ring=1</code> on the end</li>
+          <li>Turn off "Ask Before Running"</li>
+        </ol>
+        Also: tap Share → <b>Add to Home Screen</b> so Daybreak opens fullscreen like a real app.
+      </div>
+    </details>
+    <div class="footnote">Heads up: a web page can't ring while it's closed, so keep your phone's normal alarm as the trigger — Daybreak is the gate you have to pass to shut it up.</div>
+  </section>
+
+  <!-- ========== ARMED ========== -->
+  <section id="s-armed" class="screen">
+    <div class="topbar">
+      <div class="brand"><span class="dot"></span>daybreak</div>
+      <div class="streak">🔥 <b id="streakNum2">0</b> day streak</div>
+    </div>
+    <div class="orbwrap">
+      <div class="ringlabel">armed</div>
+      <div class="bigtime" id="armedTime">07:00</div>
+      <div class="orb" style="opacity:.5;animation:none"><div><div class="lab">alarm set</div></div></div>
+      <div class="promptsub" id="armedCountdown" style="margin-top:18px"></div>
+      <div class="stack">
+        <button class="btn ghost" id="disarmBtn">Disarm</button>
+      </div>
+      <div class="footnote">Leave this tab open to ring here, or wire up the shortcut so it opens on its own.</div>
+    </div>
+  </section>
+
+  <!-- ========== RINGING ========== -->
+  <section id="s-ringing" class="screen ringing">
+    <div class="orbwrap">
+      <div class="ringlabel">wake up</div>
+      <div class="bigtime" id="ringTime">07:00</div>
+      <div class="orb sunOrb" id="ringSunOrb"></div>
+      <div class="lab ringlab" id="ringLab">tap to silence... if you can</div>
+      <div class="stack">
+        <button class="btn" id="dismissBtn">I'm up — give me my challenge</button>
+        <button class="btn ghost" id="easyBtn" hidden>🎚️ Use Easy Pass (<span id="easyLeft">0</span>)</button>
+        <button class="btn ghost" id="snoozeBtn">Snooze (<span id="snoozeLeft">1</span> left)</button>
+        <button class="btn ghost" id="tokenBtn" hidden>⏰ Use Snooze Token (<span id="tokenLeft">0</span>)</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== SNOOZE MATH ========== -->
+  <section id="s-math" class="screen">
+    <div class="orbwrap">
+      <div class="ringlabel">snooze tax</div>
+      <div class="prompt">Solve it to earn your snooze</div>
+      <div class="mathq" id="mathQ">7 × 8</div>
+      <input class="mathin" id="mathA" type="number" inputmode="numeric" placeholder="?" />
+      <div class="stack">
+        <button class="btn" id="mathSubmit">Submit</button>
+        <button class="tinybtn" id="mathCancel">never mind, keep ringing</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== CHALLENGE ========== -->
+  <section id="s-challenge" class="screen">
+    <div class="orbwrap" id="challengeBody"></div>
+  </section>
+
+  <!-- ========== SUCCESS ========== -->
+  <section id="s-success" class="screen success">
+    <div class="orbwrap">
+      <div class="orb"><div><div class="num">🌅</div></div></div>
+      <div class="prompt" id="successMsg">You're up. Nice.</div>
+      <div class="promptsub" id="successNote">The sun's up and so are you.</div>
+      <div class="wakestats" id="successStats"></div>
+      <div class="streak" style="margin-top:14px;font-size:16px">🔥 <b id="streakNum3">1</b> day streak · 🪙 <b id="cCoins2">0</b></div>
+      <div class="stack">
+        <button class="btn" id="doneBtn">Done</button>
+      </div>
+    </div>
+  </section>
+  <!-- ========== SHOP ========== -->
+  <section id="s-shop" class="screen">
+    <div class="topbar">
+      <div class="brand"><span class="dot"></span>sun shop</div>
+      <div class="streak">🪙 <b id="shopCoins">0</b></div>
+    </div>
+    <div class="hero" style="margin:18px 0 4px">
+      <div class="eyebrow">spend your sun coins</div>
+      <div class="h1" style="font-size:clamp(28px,9vw,40px)">The Shop</div>
+      <div class="sub">Earn 10 coins every day you beat the alarm. Spend them to protect your streak.</div>
+    </div>
+    <div id="shopItems"></div>
+    <div class="spacer"></div>
+    <button class="btn ghost" id="shopBack" style="margin-top:14px">← Back</button>
+  </section>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<div class="modal" id="previewModal">
+  <div class="modalcard">
+    <button class="modalclose" id="previewClose">×</button>
+    <div id="previewBody"></div>
+  </div>
+</div>
+
+<script>
+/* ===================== state + storage ===================== */
+const CHALLENGES = [
+  {id:'pushups', icon:'💪', name:'Push-ups (motion)', req:'motion', type:'motion', label:'PUSH-UPS', prompt:n=>`Drop and give me ${n}`, sub:'Strap the phone to your arm or hold it. Each rep needs a real down-and-up.'},
+  {id:'pushupsCam',icon:'🎥', name:'Push-ups (camera)', req:'camera', type:'pose', label:'PUSH-UPS', prompt:n=>`Drop and give me ${n}`, sub:'Prop your phone sideways a few feet away so it sees your whole body.'},
+  {id:'situps',  icon:'🔥', name:'Sit-ups',   req:'motion', type:'motion', label:'SIT-UPS',  prompt:n=>`${n} sit-ups, let's go`, sub:'Hold the phone to your chest and crunch.'},
+  {id:'grass',   icon:'🌱', name:'Touch grass',req:'camera', type:'photo',  prompt:()=>'Go outside & touch grass', sub:'Step outside and photograph real grass or the open sky.', bright:true},
+  {id:'splash',  icon:'💦', name:'Cold splash',req:'camera', type:'photo',  prompt:()=>'Splash your face awake', sub:'Cold water on the face, then snap a pic at the sink.'},
+  {id:'bed',     icon:'🛏️', name:'Make your bed',req:'camera',type:'photo',prompt:()=>'Make your bed properly', sub:'No half-jobs. Photograph the finished bed.'},
+  {id:'object',  icon:'🔍', name:'Object hunt',req:'camera', type:'object', prompt:o=>`Go find: ${o}`, sub:'It\'s in another room. Walk over and photograph it.'},
+  {id:'breakfast',icon:'🍳', name:'Make breakfast',req:'camera',type:'photo', prompt:()=>'Fix breakfast & photograph it', sub:'Pour water, grab fruit, plate something real — then snap the goods.'},
+  {id:'tap',     icon:'☀️', name:'Tap the sun',req:'none',  type:'tap',   prompt:n=>`Tap the sun ${n} times`, sub:'No gadgets needed. Just keep tapping until it rises.'},
+  {id:'math',    icon:'🧮', name:'Brain wake-up',req:'none', type:'math', prompt:()=>'Solve 3 to boot your brain', sub:'No easy mode. Three in a row at your level.'},
+  {id:'memory',  icon:'🧠', name:'Memory game',req:'none',  type:'memory',prompt:()=>'Watch, then repeat', sub:'Simon says. Get to a 5-long streak.'},
+  {id:'type',    icon:'⌨️', name:'Type it out',req:'none',  type:'type',  prompt:()=>'Type it word for word', sub:'No copy-paste. Nail it exactly to wake up.'},
+];
+const OBJECTS = ['the kitchen sink','a clean spoon','the fridge','your toothbrush','a houseplant','the front door','a roll of paper towels','a coffee mug','a cereal box','the bathroom mirror','a pair of shoes','the microwave'];
+
+const mem = {}; // last-resort fallback
+const hasWS = !!(window.storage && window.storage.get);
+let LS=null; try{ LS=window.localStorage; const t='__db_t'; LS.setItem(t,'1'); LS.removeItem(t); }catch(e){ LS=null; }
+async function load(k,def){
+  try{ if(hasWS){ const r=await window.storage.get(k); return r?JSON.parse(r.value):def; } }catch(e){}
+  try{ if(LS){ const v=LS.getItem('daybreak:'+k); if(v!=null) return JSON.parse(v); } }catch(e){}
+  return (k in mem)?mem[k]:def;
+}
+async function save(k,v){
+  mem[k]=v;
+  try{ if(hasWS){ await window.storage.set(k, JSON.stringify(v)); return; } }catch(e){}
+  try{ if(LS){ LS.setItem('daybreak:'+k, JSON.stringify(v)); } }catch(e){}
+}
+
+let settings = {time:'07:00', enabled:['pushups','pushupsCam','grass','bed','object'], reps:10, snoozes:1, mathLevel:'algebra'};
+let streak = 0, coins = 0, freezes = 0;
+let snoozeTokens = 0, easyPasses = 0, insurance = false;
+let themesOwned = ['default'], sunsOwned = ['default'];
+let equipTheme = 'default', equipSun = 'default';
+let personality = false, userName = '';
+let prestige = 0, maxStreak = 0, onboarded = false;
+let wakeLog = [];                 // [{d, secs, lateMin}] recent mornings for stats
+let workoutDate = '', workoutEarned = 0;   // daily coin-earning cap for workouts
+let doneDates = [];   // 'YYYY-MM-DD' days the alarm was beaten
+let frozenDates = []; // days a streak freeze covered
+let lastDone = null;
+let runtime = {snoozeUsed:0, snoozeMins:[5,3,1], active:null, ringTimer:null};
+
+/* ===================== helpers ===================== */
+const $ = s=>document.querySelector(s);
+const screens = ['onboard','setup','armed','ringing','math','challenge','success','shop'];
+function show(name){
+  screens.forEach(s=>$('#s-'+s).classList.toggle('active', s===name));
+}
+/* date helpers (local calendar day) */
+function dayKey(d){ d=d||new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+function keyToDate(k){ const [y,m,dd]=k.split('-').map(Number); return new Date(y,m-1,dd); }
+function daysBetween(k1,k2){ return Math.round((keyToDate(k2)-keyToDate(k1))/864e5); }
+let toastT;
+function toast(msg){
+  const t=$('#toast'); t.textContent=msg; t.classList.add('show');
+  clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('show'),2200);
+}
+function setDawn(v){ // 0..1
+  $('#sky').style.setProperty('--dawn', v);
+  $('#dawn').style.setProperty('--dawn', v);
+}
+function fmt(t){
+  let [h,m]=t.split(':').map(Number); const ap=h>=12?'PM':'AM'; let hh=h%12; if(hh===0)hh=12;
+  return `${hh}:${String(m).padStart(2,'0')} ${ap}`;
+}
+
+/* ===================== stars ===================== */
+(function stars(){
+  const c=$('#stars'), x=c.getContext('2d');
+  function size(){c.width=innerWidth;c.height=innerHeight;}
+  size(); addEventListener('resize',size);
+  const pts=[...Array(70)].map(()=>({x:Math.random(),y:Math.random()*.7,r:Math.random()*1.4+.3,t:Math.random()*6}));
+  (function draw(){
+    x.clearRect(0,0,c.width,c.height);
+    pts.forEach(p=>{p.t+=.02;const a=.4+Math.sin(p.t)*.35;x.globalAlpha=a;x.fillStyle='#FFF4E6';
+      x.beginPath();x.arc(p.x*c.width,p.y*c.height,p.r,0,7);x.fill();});
+    requestAnimationFrame(draw);
+  })();
+})();
+
+/* ===================== audio alarm ===================== */
+let ac, masterGain, alarmTimer, audioOn=false, _noiseBuf=null;
+let customUnlocked=false, useCustomSound=false, customSoundURL='', customAudioEl=null;
+
+/* themed soundscapes — each skin gets a distinct character, not just beeps */
+const SOUNDS={
+  default:{kind:'beep',  freqs:[660,880], type:'sawtooth'},
+  moon:   {kind:'chime', notes:[523,659,784], type:'sine'},
+  ocean:  {kind:'wave'},
+  ember:  {kind:'crackle'},
+  galaxy: {kind:'arp',   notes:[330,494,659,988], type:'sine', step:0.16},
+  city:   {kind:'chime', notes:[392,523,587,784], type:'triangle'},
+  aurora: {kind:'pad',   notes:[440,554,659], type:'sine'},
+  solar:  {kind:'swell', base:110, type:'sawtooth'},            // low hum that crescendos
+  nebula: {kind:'pad',   notes:[330,392,494,587], type:'triangle', vibrato:true},
+  phoenix:{kind:'sweep', from:220, to:920, type:'sawtooth', chord:[440,554,659]},
+  prism:  {kind:'arp',   notes:[523,659,784,1047,1319], type:'triangle', step:0.11},
+  comet:  {kind:'sweep', from:1200, to:200, type:'sine'}
+};
+function noiseBuffer(){ if(_noiseBuf) return _noiseBuf;
+  const n=ac.sampleRate*1.5, b=ac.createBuffer(1,n,ac.sampleRate), d=b.getChannelData(0);
+  for(let i=0;i<n;i++) d[i]=Math.random()*2-1; _noiseBuf=b; return b; }
+function note(t,dur,freq,type,peak,dest,atk,rel){ atk=atk||0.01; rel=rel||0.08;
+  const o=ac.createOscillator(), g=ac.createGain(); o.type=type||'sine'; o.frequency.setValueAtTime(freq,t);
+  o.connect(g); g.connect(dest);
+  g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(Math.max(0.0002,peak),t+atk);
+  g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+  o.start(t); o.stop(t+dur+rel); return o; }
+function playCycle(p,t0,dest){
+  const T=p.type||'sine';
+  try{
+    if(p.kind==='beep'){ let t=t0; p.freqs.forEach(f=>{ note(t,0.16,f,T,0.2,dest); t+=0.22; }); return (t-t0)+0.18; }
+    if(p.kind==='chime'){ let t=t0; p.notes.forEach(f=>{ note(t,0.5,f,T,0.16,dest,0.02,0.3); t+=0.28; }); return (t-t0)+0.7; }
+    if(p.kind==='arp'){ const s=p.step||0.13; let t=t0; p.notes.forEach(f=>{ note(t,s*1.7,f,T,0.16,dest,0.005,0.12); t+=s; }); return (t-t0)+0.5; }
+    if(p.kind==='pad'){ const dur=2.6; p.notes.forEach((f,i)=>{ const o=ac.createOscillator(),g=ac.createGain();
+        o.type=T; o.frequency.value=f; o.detune.value=(i-1)*7; o.connect(g); g.connect(dest);
+        g.gain.setValueAtTime(0.0001,t0); g.gain.exponentialRampToValueAtTime(0.12,t0+0.9);
+        g.gain.setValueAtTime(0.12,t0+dur-0.6); g.gain.exponentialRampToValueAtTime(0.0001,t0+dur);
+        if(p.vibrato){ const lfo=ac.createOscillator(),lg=ac.createGain(); lfo.frequency.value=5; lg.gain.value=4; lfo.connect(lg); lg.connect(o.detune); lfo.start(t0); lfo.stop(t0+dur); }
+        o.start(t0); o.stop(t0+dur+0.1); }); return dur+0.5; }
+    if(p.kind==='swell'){ const dur=3.0, base=p.base||110;
+        const o=ac.createOscillator(),g=ac.createGain(); o.type=T; o.frequency.value=base; o.connect(g); g.connect(dest);
+        g.gain.setValueAtTime(0.0001,t0); g.gain.exponentialRampToValueAtTime(0.3,t0+dur*0.72); g.gain.exponentialRampToValueAtTime(0.0001,t0+dur);
+        const o2=ac.createOscillator(),g2=ac.createGain(); o2.type='sine'; o2.frequency.value=base*4; o2.connect(g2); g2.connect(dest);
+        g2.gain.setValueAtTime(0.0001,t0); g2.gain.exponentialRampToValueAtTime(0.08,t0+dur*0.82); g2.gain.exponentialRampToValueAtTime(0.0001,t0+dur);
+        o.start(t0); o.stop(t0+dur+0.1); o2.start(t0); o2.stop(t0+dur+0.1); return dur+0.25; }
+    if(p.kind==='sweep'){ const dur=1.3; if(p.chord) p.chord.forEach(f=>note(t0,0.5,f,'triangle',0.12,dest,0.01,0.3));
+        const o=ac.createOscillator(),g=ac.createGain(); o.type=T; o.frequency.setValueAtTime(p.from,t0);
+        o.frequency.exponentialRampToValueAtTime(Math.max(1,p.to),t0+dur); o.connect(g); g.connect(dest);
+        g.gain.setValueAtTime(0.0001,t0); g.gain.exponentialRampToValueAtTime(0.22,t0+0.1); g.gain.exponentialRampToValueAtTime(0.0001,t0+dur);
+        o.start(t0); o.stop(t0+dur+0.1); return dur+0.5; }
+    if(p.kind==='crackle'){ let t=t0; for(let i=0;i<7;i++){ const f=600+Math.random()*900; note(t,0.05,f,'triangle',0.18,dest,0.002,0.03); t+=0.12+Math.random()*0.12; } return (t-t0)+0.4; }
+    if(p.kind==='wave'){ const dur=2.2; const src=ac.createBufferSource(); src.buffer=noiseBuffer(); src.loop=true;
+        const lp=ac.createBiquadFilter(); lp.type='lowpass'; lp.frequency.setValueAtTime(280,t0);
+        lp.frequency.exponentialRampToValueAtTime(1200,t0+dur*0.5); lp.frequency.exponentialRampToValueAtTime(280,t0+dur);
+        const g=ac.createGain(); src.connect(lp); lp.connect(g); g.connect(dest);
+        g.gain.setValueAtTime(0.0001,t0); g.gain.exponentialRampToValueAtTime(0.2,t0+dur*0.5); g.gain.exponentialRampToValueAtTime(0.0001,t0+dur);
+        src.start(t0); src.stop(t0+dur+0.1); return dur+0.4; }
+  }catch(e){}
+  note(t0,0.2,660,'sawtooth',0.2,dest); return 0.5;
+}
+function loopAlarm(){
+  if(!audioOn) return;
+  let dur=0.8;
+  try{ const p=SOUNDS[equipSun]||SOUNDS.default; dur=playCycle(p, ac.currentTime+0.03, masterGain); }catch(e){}
+  alarmTimer=setTimeout(loopAlarm, Math.max(350, dur*1000));
+}
+function ensureCustomEl(){ if(!customSoundURL) return null;
+  if(!customAudioEl){ customAudioEl=new Audio(customSoundURL); customAudioEl.loop=true; }
+  return customAudioEl; }
+function startAlarm(){
+  try{
+    ac = ac || new (window.AudioContext||window.webkitAudioContext)();
+    if(ac.state==='suspended') ac.resume();
+    audioOn=true;
+    if(useCustomSound && customSoundURL){ const el=ensureCustomEl(); if(el){ try{ el.currentTime=0; }catch(e){} el.play().catch(()=>{}); return; } }
+    masterGain = ac.createGain(); masterGain.connect(ac.destination); masterGain.gain.value=1;
+    loopAlarm();
+  }catch(e){}
+}
+function stopAlarm(){
+  audioOn=false; clearTimeout(alarmTimer);
+  try{ if(masterGain){ masterGain.gain.cancelScheduledValues(ac.currentTime); masterGain.gain.setValueAtTime(0.0001, ac.currentTime); } }catch(e){}
+  try{ if(customAudioEl){ customAudioEl.pause(); } }catch(e){}
+}
+
+/* ===================== SETUP screen ===================== */
+function renderChips(){
+  const groups={physical:$('#chipsPhysical'), backup:$('#chipsBackup')};
+  groups.physical.innerHTML=''; groups.backup.innerHTML='';
+  CHALLENGES.forEach(c=>{
+    const g = c.req==='none' ? 'backup' : 'physical';
+    const el=document.createElement('div');
+    el.className='chip'+(settings.enabled.includes(c.id)?' on':'');
+    el.innerHTML=`<span>${c.icon}</span>${c.name}`;
+    el.onclick=()=>{
+      const i=settings.enabled.indexOf(c.id);
+      if(i>=0) settings.enabled.splice(i,1);
+      else settings.enabled.push(c.id);
+      el.classList.toggle('on'); save('settings',settings); updateArmState();
+    };
+    groups[g].appendChild(el);
+  });
+}
+function bindSteppers(){
+  document.querySelectorAll('.stepper').forEach(st=>{
+    const key=st.dataset.key;
+    st.querySelectorAll('button').forEach(b=>b.onclick=()=>{
+      let d=+b.dataset.d;
+      if(key==='reps') settings.reps=Math.max(3,Math.min(50,settings.reps+d*(d>0?2:2)));
+      if(key==='snoozes') settings.snoozes=Math.max(0,Math.min(3,settings.snoozes+d));
+      $('#v-'+key).textContent = settings[key];
+      save('settings',settings);
+    });
+  });
+}
+
+function updateArmState(){
+  const none = settings.enabled.length===0;
+  const arm=$('#armBtn'), test=$('#testBtn');
+  if(arm){ arm.disabled=none; arm.textContent=none?'Turn on a challenge first':'Arm alarm'; }
+  if(test){ test.disabled=none; }
+}
+
+/* ===================== alarm scheduling (in-tab) ===================== */
+function arm(){
+  settings.time = $('#alarmTime').value || '07:00';
+  save('settings',settings);
+  $('#armedTime').textContent=fmt(settings.time);
+  show('armed');
+  scheduleTick();
+}
+function scheduleTick(){
+  clearInterval(runtime.ringTimer);
+  runtime.ringTimer=setInterval(()=>{
+    const now=new Date();
+    const cur=String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
+    // countdown text
+    const [h,m]=settings.time.split(':').map(Number);
+    let target=new Date(now); target.setHours(h,m,0,0);
+    if(target<=now) target.setDate(target.getDate()+1);
+    const diff=target-now, hh=Math.floor(diff/3.6e6), mm=Math.floor(diff%3.6e6/6e4);
+    $('#armedCountdown').textContent=`rings in ${hh}h ${mm}m`;
+    if(cur===settings.time && now.getSeconds()<2){ clearInterval(runtime.ringTimer); ring(); }
+  },1000);
+}
+
+/* ===================== RINGING ===================== */
+function ring(){
+  runtime.snoozeUsed=0;
+  runtime.ringStart=Date.now();
+  $('#ringTime').textContent=fmt(settings.time||$('#alarmTime').value||'07:00');
+  updateSnoozeBtn();
+  setDawn(0);
+  show('ringing');
+  startAlarm();
+  const lab=document.querySelector('#s-ringing .lab');
+  // browsers block sound until the user touches the page — first tap anywhere unlocks it
+  function kick(){ try{ if(ac && ac.state==='suspended') ac.resume(); }catch(e){} if(!audioOn) startAlarm();
+    if(lab) lab.textContent='now beat the challenge to silence it'; document.removeEventListener('pointerdown',kick,true); }
+  if(ac && ac.state==='running' && audioOn){ if(lab) lab.textContent='now beat the challenge to silence it'; }
+  else { if(lab) lab.textContent='🔇 tap anywhere to start the alarm'; document.addEventListener('pointerdown',kick,true); }
+}
+function updateSnoozeBtn(){
+  const left=Math.max(0, settings.snoozes-runtime.snoozeUsed);
+  $('#snoozeLeft').textContent=left;
+  $('#snoozeBtn').classList.toggle('hidden', left<=0);
+  // easy pass available any time you own one
+  const eb=$('#easyBtn'); $('#easyLeft').textContent=easyPasses; eb.hidden = easyPasses<=0;
+  // snooze token offered once normal snoozes are gone
+  const tb=$('#tokenBtn'); $('#tokenLeft').textContent=snoozeTokens; tb.hidden = !(left<=0 && snoozeTokens>0);
+}
+function useSnoozeToken(){
+  if(snoozeTokens<=0) return;
+  snoozeTokens--; persistProgress(); stopAlarm();
+  show('armed'); $('#armedCountdown').textContent='snoozing 5 min…';
+  toast('Token used — back in 5.');
+  setTimeout(()=>ring(), 5*60*1000);
+}
+function useEasyPass(){
+  if(easyPasses<=0) return;
+  easyPasses--; persistProgress();
+  // a quick, guaranteed-easy challenge: 25 taps
+  runtime.active={icon:'🎚️',name:'Easy Pass'};
+  tapChallenge(runtime.active, 'Easy Pass — just tap it out', 25);
+}
+
+/* ===================== SNOOZE + MATH ===================== */
+let mathAns=0;
+function openMath(){
+  stopAlarm();
+  const lvl=runtime.snoozeUsed;
+  let a,b,q;
+  if(lvl===0){a=rnd(6,12);b=rnd(6,12);mathAns=a*b;q=`${a} × ${b}`;}
+  else if(lvl===1){a=rnd(11,19);b=rnd(11,19);mathAns=a*b;q=`${a} × ${b}`;}
+  else{a=rnd(13,25);b=rnd(12,22);mathAns=a*b;q=`${a} × ${b}`;}
+  $('#mathQ').textContent=q; $('#mathA').value=''; show('math');
+  setTimeout(()=>$('#mathA').focus(),200);
+}
+function rnd(a,b){return Math.floor(Math.random()*(b-a+1))+a;}
+
+/* generates a problem with ONE numeric answer (gradeable at 7am) */
+function genProblem(level){
+  if(level==='mult'){
+    const a=rnd(12,29), b=rnd(11,19);
+    return {q:`${a} × ${b}`, ans:a*b, hint:"What's"};
+  }
+  if(level==='prealg'){
+    const a=rnd(2,9), x=rnd(2,12), b=rnd(1,20);
+    return {q:`${a}x + ${b} = ${a*x+b}`, ans:x, hint:'Solve for x'};
+  }
+  // algebra: half linear (with negatives), half factorable quadratic
+  if(Math.random()<0.5){
+    const a=rnd(2,9), x=rnd(-8,12), b=rnd(-15,15), c=a*x+b;
+    const bs=b<0?`− ${-b}`:`+ ${b}`;
+    return {q:`${a}x ${bs} = ${c}`, ans:x, hint:'Solve for x'};
+  }
+  const r1=rnd(1,9), r2=rnd(1,9), B=-(r1+r2), C=r1*r2;
+  const bs=B<0?`− ${-B}`:`+ ${B}`;
+  return {q:`x² ${bs}x + ${C} = 0`, ans:Math.max(r1,r2), hint:'Enter the larger root for x'};
+}
+function submitMath(){
+  if(+$('#mathA').value===mathAns){
+    runtime.snoozeUsed++;
+    const mins=runtime.snoozeMins[Math.min(runtime.snoozeUsed-1,runtime.snoozeMins.length-1)];
+    show('armed'); $('#armedCountdown').textContent=`snoozing ${mins} min…`;
+    toast(`Fine. ${mins} more minutes.`);
+    setTimeout(()=>ring(), mins*60*1000);
+  }else{
+    toast('Nope. Try again.'); $('#mathA').value=''; $('#mathA').focus();
+  }
+}
+
+/* ===================== CHALLENGE engine ===================== */
+let stream=null;
+function pickChallenge(){
+  const pool=CHALLENGES.filter(c=>settings.enabled.includes(c.id));
+  return pool[Math.floor(Math.random()*pool.length)];
+}
+function startChallenge(){
+  // NOTE: alarm keeps blaring through the whole challenge — only succeed() silences it
+  const c=pickChallenge();
+  if(!c){ show('setup'); return; }
+  runtime.active=c;
+  if(c.type==='motion') motionChallenge(c);
+  else if(c.type==='pose') poseChallenge(c);
+  else if(c.type==='tap') tapChallenge(c);
+  else if(c.type==='math') mathChallenge(c);
+  else if(c.type==='type') typeChallenge(c);
+  else if(c.type==='memory') memoryChallenge(c);
+  else cameraChallenge(c);
+}
+
+/* --- motion (push-ups / sit-ups) --- */
+/* ===================== workout: earn coins outside the alarm ===================== */
+const WORKOUT_CAP=150;
+const WORKOUT_C={icon:'💪', name:'Workout', label:'WORKOUT', req:'camera', type:'pose',
+  prompt:n=>'Earn coins — 3–5 per push-up', sub:'Every clean push-up banks coins. Daily cap keeps it fair.'};
+function workoutResetIfNewDay(){ const t=dayKey(); if(workoutDate!==t){ workoutDate=t; workoutEarned=0; } }
+function awardWorkoutRep(){
+  workoutResetIfNewDay();
+  if(workoutEarned>=WORKOUT_CAP) return 0;
+  let got=3+Math.floor(Math.random()*3);            // 3..5
+  if(workoutEarned+got>WORKOUT_CAP) got=WORKOUT_CAP-workoutEarned;
+  workoutEarned+=got; coins+=got;
+  save('coins',coins); save('workoutEarned',workoutEarned); save('workoutDate',workoutDate);
+  return got;
+}
+function startWorkout(){
+  workoutResetIfNewDay();
+  runtime.workout=true;
+  poseChallenge(WORKOUT_C);   // camera pose first; falls back to motion if camera/model unavailable
+}
+function finishWorkout(){
+  stopPose(); teardownMotion();
+  runtime.workout=false;
+  persistProgress(); refreshStats(); setDawn(0); show('setup');
+  toast(`Workout done — banked ${workoutEarned}🪙 today`);
+}
+function workoutFallback(){ stopPose(); runtime.workout=true; toast('Using motion instead'); motionChallenge(WORKOUT_C); }
+
+function motionChallenge(c){
+  const earn = !!runtime.workout;
+  const target=settings.reps;
+  const body=$('#challengeBody');
+  body.innerHTML=`
+    <div class="ringlabel">${earn?'WORKOUT · motion':c.label}</div>
+    <div class="prompt">${c.prompt(target)}</div>
+    <div class="orb ringing"><div><div class="num" id="repNum">0</div><div class="lab" id="repLab">${earn?'reps':'/ '+target}</div></div></div>
+    <div class="pbar"><i id="repBar"></i></div>
+    <div class="promptsub" id="repHint">${c.sub}</div>
+    <div class="stack">${earn
+      ? `<button class="btn" id="finishW">✓ Finish &amp; bank</button>`
+      : `<button class="tinybtn" id="bail">switch challenge</button>`}</div>`;
+  show('challenge');
+  if(earn){ $('#finishW').onclick=finishWorkout; } else { $('#bail').onclick=()=>{ teardownMotion(); startChallenge(); }; }
+
+  let count=0, baseline=9.8, last=0, peaked=false, quietStart=0;
+  const need = ()=>{ $('#repNum').textContent=count;
+    if(earn){ const got=awardWorkoutRep(); $('#repHint').textContent = got>0?`+${got} 🪙 · ${workoutEarned}/${WORKOUT_CAP} today`:`Daily cap hit (${WORKOUT_CAP}🪙) — still great exercise!`; }
+    else { $('#repBar').style.width=(count/target*100)+'%'; setDawn(Math.min(1, count/target));
+      if(count>=target){ teardownMotion(); succeed(c); } } };
+
+  // a rep = a strong push (peak) FOLLOWED BY a brief rest. Shaking never rests, so it won't count.
+  function onMotion(e){
+    const a=e.accelerationIncludingGravity||e.acceleration; if(!a)return;
+    const mag=Math.sqrt((a.x||0)**2+(a.y||0)**2+(a.z||0)**2);
+    const now=Date.now();
+    if(mag > baseline+6){ peaked=true; quietStart=0; }        // a genuine rep generates a clear spike
+    else if(peaked && mag < baseline+1.6){                     // then the body settles at the top
+      if(!quietStart) quietStart=now;
+      else if(now-quietStart>200 && now-last>800){              // held still briefly + min cadence
+        count++; last=now; peaked=false; quietStart=0; need(); navigator.vibrate&&navigator.vibrate(40);
+      }
+    } else { quietStart=0; }
+  }
+  function begin(){ window.addEventListener('devicemotion', onMotion); runtime._motion=onMotion;
+    $('#repHint').textContent = earn?'Move! Each clean rep banks coins.':'Move! Each full rep adds one.'; }
+
+  // iOS permission
+  if(typeof DeviceMotionEvent!=='undefined' && typeof DeviceMotionEvent.requestPermission==='function'){
+    $('#repHint').innerHTML='Tap the sun to enable motion, then start your reps.';
+    $('#challengeBody').querySelector('.orb').onclick=()=>{
+      DeviceMotionEvent.requestPermission().then(p=>{ if(p==='granted') begin(); else (earn?finishWorkout():fallbackTimer(c,target)); }).catch(()=>earn?finishWorkout():fallbackTimer(c,target));
+    };
+  } else if(window.DeviceMotionEvent){ begin(); }
+  else { earn?(toast('No motion sensor for workout'),finishWorkout()):tapChallenge(c, `No motion sensor here — tap ${c.name.toLowerCase()} out instead`, 60); }
+}
+function teardownMotion(){ if(runtime._motion){ window.removeEventListener('devicemotion',runtime._motion); runtime._motion=null; } }
+function fallbackTimer(c,target){ // motion permission denied -> switch to tap, no camera/sensor needed
+  tapChallenge(c, `Motion's off — tap ${c.name.toLowerCase()} out instead`, 60);
+}
+
+/* --- camera push-ups via MoveNet pose detection (lazy-loaded) --- */
+function loadScript(src){ return new Promise((res,rej)=>{ const s=document.createElement('script'); s.src=src; s.async=true; s.onload=res; s.onerror=()=>rej(new Error('script load failed')); document.head.appendChild(s); }); }
+let poseLibPromise=null;
+function ensurePoseLib(){
+  if(window.poseDetection && window.tf) return Promise.resolve(true);
+  if(!poseLibPromise){
+    poseLibPromise=(async()=>{
+      await loadScript('https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.20.0/dist/tf.min.js');
+      await loadScript('https://cdn.jsdelivr.net/npm/@tensorflow-models/pose-detection@2.1.3/dist/pose-detection.min.js');
+      return !!(window.poseDetection && window.tf);
+    })().catch(()=>{ poseLibPromise=null; return false; });
+  }
+  return poseLibPromise;
+}
+function bailToTap(msg){ stopPose(); tapChallenge(CHALLENGES.find(x=>x.id==='tap'), msg); }
+function stopPose(){ if(runtime._pose){ try{runtime._pose.stop();}catch(e){} runtime._pose=null; } stopCam(); }
+
+async function poseChallenge(c){
+  const earn = !!runtime.workout;
+  const target=settings.reps;
+  const fail = (msg)=> earn ? workoutFallback() : bailToTap(msg);
+  const body=$('#challengeBody');
+  body.innerHTML=`
+    <div class="ringlabel">${earn?'WORKOUT · camera':c.label+' · camera'}</div>
+    <div class="prompt" style="font-size:clamp(20px,5.5vw,26px)">${c.prompt(target)}</div>
+    <div class="posewrap"><video id="cam" autoplay playsinline muted></video><canvas id="poseCv"></canvas>
+      <div class="skel" id="poseSkel">warming up the camera…</div>
+      <div class="repbadge"><span id="repNum">0</span><small>${earn?'reps':'/ '+target}</small></div></div>
+    <div class="pbar"><i id="repBar"></i></div>
+    <div class="promptsub" id="poseHint">${c.sub}</div>
+    <div class="stack">
+      ${earn?`<button class="btn" id="finishW">✓ Finish &amp; bank</button>`:`<button class="tinybtn" id="bailP">switch challenge</button>`}
+      <button class="tinybtn" id="noCamP" style="color:var(--coral)">📷 camera trouble? ${earn?'use motion':'do a no-camera one'}</button>
+    </div>`;
+  show('challenge');
+  if(earn){ $('#finishW').onclick=finishWorkout; } else { $('#bailP').onclick=()=>{ stopPose(); startChallenge(); }; }
+  $('#noCamP').onclick=()=> earn ? workoutFallback() : bailToTap('No camera — tap your way out instead');
+
+  // 1) camera
+  try{
+    stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user', width:{ideal:640}, height:{ideal:480}}});
+    $('#cam').srcObject=stream;
+    await ($('#cam').play&&$('#cam').play().catch(()=>{}));
+  }catch(e){ return fail("Camera's off — tap your way out instead"); }
+
+  // 2) model (lazy) — with a hard timeout so a slow network can never trap you
+  $('#poseHint').textContent='Loading the pose detector… (first time only)';
+  let ok=false;
+  try{ ok=await Promise.race([ ensurePoseLib(), new Promise(r=>setTimeout(()=>r('timeout'),15000)) ]); }catch(e){ ok=false; }
+  if(ok==='timeout') return fail('Camera AI took too long to load — tap your way out instead');
+  if(!ok || !window.poseDetection) return fail('Could not load the camera AI — tap your way out instead');
+
+  let detector;
+  try{
+    try{ await window.tf.setBackend('webgl'); }catch(e){}
+    await window.tf.ready();
+    detector=await window.poseDetection.createDetector(
+      window.poseDetection.SupportedModels.MoveNet,
+      {modelType: window.poseDetection.movenet.modelType.SINGLEPOSE_LIGHTNING});
+  }catch(e){ return fail('Pose detector failed to start — tap your way out instead'); }
+
+  $('#poseHint').textContent= earn?"Get into a push-up position — banking coins.":"Get into a push-up position — I'm watching.";
+  const sk=$('#poseSkel'); if(sk) sk.remove();
+  const v=$('#cam'), cv=$('#poseCv'), ctx=cv.getContext('2d');
+  let count=0, st='up', lastRep=0, running=true, lastInfer=0;
+  runtime._pose={ stop:()=>{ running=false; try{detector.dispose&&detector.dispose();}catch(e){} } };
+
+  function ang(a,b,d){ const ab=[a.x-b.x,a.y-b.y], cb=[d.x-b.x,d.y-b.y];
+    const dot=ab[0]*cb[0]+ab[1]*cb[1]; const m=(Math.hypot(ab[0],ab[1])*Math.hypot(cb[0],cb[1]))||1;
+    return Math.acos(Math.max(-1,Math.min(1,dot/m)))*180/Math.PI; }
+  function draw(kp){ if(cv.width!==v.videoWidth){ cv.width=v.videoWidth||640; cv.height=v.videoHeight||480; }
+    ctx.clearRect(0,0,cv.width,cv.height);
+    const pairs=[[5,7],[7,9],[6,8],[8,10],[5,6],[5,11],[6,12],[11,12],[11,13],[13,15],[12,14],[14,16]];
+    ctx.lineWidth=Math.max(2,cv.width/170); ctx.strokeStyle='rgba(255,194,75,.9)';
+    pairs.forEach(([a,b])=>{ if(kp[a].score>.3&&kp[b].score>.3){ ctx.beginPath(); ctx.moveTo(kp[a].x,kp[a].y); ctx.lineTo(kp[b].x,kp[b].y); ctx.stroke(); }});
+    ctx.fillStyle='rgba(255,107,74,.95)';
+    kp.forEach(p=>{ if(p.score>.3){ ctx.beginPath(); ctx.arc(p.x,p.y,Math.max(3,cv.width/130),0,7); ctx.fill(); }});
+  }
+  async function loop(ts){
+    if(!running) return;
+    if(!lastInfer || ts-lastInfer>70){            // ~14 fps — smooth enough for push-ups, easy on battery
+      lastInfer=ts;
+      let poses=[];
+      try{ poses=await detector.estimatePoses(v,{flipHorizontal:false}); }catch(e){}
+      if(poses && poses[0]){
+        const kp=poses[0].keypoints; draw(kp);
+        const A=[]; const ok2=(i)=>kp[i]&&kp[i].score>.3;
+        if(ok2(5)&&ok2(7)&&ok2(9)) A.push(ang(kp[5],kp[7],kp[9]));
+        if(ok2(6)&&ok2(8)&&ok2(10)) A.push(ang(kp[6],kp[8],kp[10]));
+        if(A.length){
+          const elbow=A.reduce((a,b)=>a+b,0)/A.length, now=Date.now();
+          if(st==='up' && elbow<100){ st='down'; $('#poseHint').textContent='Down… now push back up'; }
+          else if(st==='down' && elbow>150 && now-lastRep>500){
+            st='up'; count++; lastRep=now; $('#repNum').textContent=count;
+            navigator.vibrate&&navigator.vibrate(45);
+            if(earn){ const got=awardWorkoutRep();
+              $('#poseHint').textContent = got>0?`+${got} 🪙 · ${workoutEarned}/${WORKOUT_CAP} today`:`Daily cap hit (${WORKOUT_CAP}🪙) — still great exercise!`;
+            } else {
+              $('#repBar').style.width=(count/target*100)+'%'; setDawn(Math.min(1,count/target));
+              $('#poseHint').textContent='Nice — go down for the next';
+              if(count>=target){ stopPose(); succeed(c); return; }
+            }
+          }
+        } else { $('#poseHint').textContent='Can\'t see your arms — back up so your whole body is in frame.'; }
+      }
+    }
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
+}
+
+/* --- tap the sun (no sensors, also the camera fallback) --- */
+function tapChallenge(credit, note, fixedTarget){
+  const target = fixedTarget || rnd(100,300);
+  let count=0;
+  const body=$('#challengeBody');
+  body.innerHTML=`
+    <div class="ringlabel">tap to rise</div>
+    <div class="prompt">${note||'Tap the sun til it rises'}</div>
+    <div class="orb ringing" id="tapOrb" style="cursor:pointer"><div><div class="num" id="tapNum">0</div><div class="lab">/ ${target}</div></div></div>
+    <div class="pbar"><i id="tapBar"></i></div>
+    <div class="promptsub">Faster you tap, faster it's over.</div>`;
+  show('challenge');
+  const orb=$('#tapOrb');
+  const bump=()=>{
+    count++;
+    $('#tapNum').textContent=count;
+    $('#tapBar').style.width=(count/target*100)+'%';
+    setDawn(Math.min(1,count/target));
+    if(count%15===0) navigator.vibrate&&navigator.vibrate(20);
+    if(count>=target) succeed(credit);
+  };
+  // pointerdown fires once for both touch and mouse — no double counting
+  orb.addEventListener('pointerdown', e=>{ e.preventDefault(); bump(); });
+}
+
+/* --- math (level-based, single-answer, 3 in a row, no easy mode) --- */
+function mathChallenge(c){
+  let solved=0; const need=3;
+  const body=$('#challengeBody');
+  function nextQ(){
+    const p=genProblem(settings.mathLevel||'algebra');
+    let neg=false;
+    body.innerHTML=`
+      <div class="ringlabel">brain wake-up · ${solved}/${need}</div>
+      <div class="prompt">${p.hint}</div>
+      <div class="mathq">${p.q}</div>
+      <div class="mathentry">
+        <button class="signbtn" id="signBtn" title="make it negative">+</button>
+        <input class="mathin" id="cMathA" type="number" inputmode="numeric" placeholder="?" style="width:130px" />
+      </div>
+      <div class="pbar"><i style="width:${solved/need*100}%"></i></div>
+      <div class="promptsub">Answer negative? Tap the + to flip it to −.</div>
+      <div class="stack"><button class="btn" id="cMathBtn">Submit</button></div>`;
+    show('challenge');
+    setTimeout(()=>{ const el=$('#cMathA'); if(el) el.focus(); },150);
+    $('#signBtn').onclick=()=>{ neg=!neg; const b=$('#signBtn'); b.textContent=neg?'−':'+'; b.classList.toggle('neg',neg); $('#cMathA').focus(); };
+    const go=()=>{
+      const raw=$('#cMathA').value;
+      if(raw===''){ toast('Type your answer'); return; }
+      const val=(neg?-1:1)*Math.abs(Number(raw));
+      if(val===p.ans){
+        solved++; setDawn(solved/need);
+        if(solved>=need) succeed(c); else { toast(`${need-solved} to go`); nextQ(); }
+      } else { toast('Not it. New problem.'); nextQ(); }
+    };
+    $('#cMathBtn').onclick=go;
+    $('#cMathA').addEventListener('keydown',e=>{ if(e.key==='Enter') go(); });
+  }
+  nextQ();
+}
+
+
+/* --- type it out (no sensors, paste blocked) --- */
+const PHRASES=[
+  "I am awake and ready to win the day, so there is no reason to crawl back into bed now",
+  "The hardest part of any morning is the first move, and I just made it by getting up right now",
+  "Every single person I admire started their day exactly like this, by refusing to hit the snooze button",
+  "My future self is watching me right now and quietly thanking me for choosing to get out of bed today",
+  "Sleep is good but the whole entire day is waiting for me, and I am not about to waste another minute of it",
+  "Discipline means doing the thing even when it is cold and dark and my warm bed is begging me to stay"
+];
+const SPICY=[
+  "Wow you actually fell for the snooze trap again, but not today because I am up and the bed lost",
+  "Nice try bed, you almost had me, but I am stronger than a mattress and I am getting up right now",
+  "If a younger version of me could see me oversleeping they would be so disappointed, so up I go",
+  "The only thing softer than this pillow is the excuse I was about to make, so forget it I am awake"
+];
+function typingPool(){ return personality ? PHRASES.concat(SPICY) : PHRASES; }
+function norm(s){return s.toLowerCase().replace(/[^a-z0-9 ]/g,'').replace(/\s+/g,' ').trim();}
+function typeChallenge(c){
+  const target=typingPool()[Math.floor(Math.random()*typingPool().length)];
+  const body=$('#challengeBody');
+  body.innerHTML=`
+    <div class="ringlabel">type to rise</div>
+    <div class="prompt" style="font-size:clamp(20px,5.4vw,26px)">${target}</div>
+    <textarea id="typeIn" rows="3" placeholder="type it here…"
+      style="width:min(82vw,360px);font-family:var(--ui);font-size:17px;color:var(--cream);background:rgba(255,244,230,.06);border:1px solid var(--line);border-radius:16px;padding:14px;outline:none;resize:none"></textarea>
+    <div class="pbar"><i id="typeBar"></i></div>
+    <div class="promptsub">${c.sub}</div>
+    <div class="stack"><button class="tinybtn" id="bail3">switch challenge</button></div>`;
+  show('challenge');
+  const inp=$('#typeIn');
+  setTimeout(()=>inp.focus(),150);
+  inp.addEventListener('paste',e=>{ e.preventDefault(); toast('Nice try. No pasting.'); });
+  inp.addEventListener('input',()=>{
+    const tn=norm(target), vn=norm(inp.value);
+    let m=0; while(m<vn.length && m<tn.length && vn[m]===tn[m]) m++;
+    $('#typeBar').style.width=(m/tn.length*100)+'%';
+    setDawn(Math.min(1,m/tn.length));
+    if(vn===tn){ inp.disabled=true; succeed(c); }
+  });
+  $('#bail3').onclick=()=>startChallenge();
+}
+
+/* --- memory game (Simon, no sensors) --- */
+function memoryChallenge(c){
+  const need=5;
+  let seq=[], input=[], locked=true;
+  const colors=['var(--gold)','var(--coral)','var(--mint)','#7c6cff'];
+  const body=$('#challengeBody');
+  body.innerHTML=`
+    <div class="ringlabel">memory · <span id="memLvl">1</span>/${need}</div>
+    <div class="prompt">Watch, then repeat</div>
+    <div class="padgrid" id="pads">${colors.map((col,i)=>`<div class="pad" data-i="${i}" style="background:${col};color:${col}"></div>`).join('')}</div>
+    <div class="pbar"><i id="memBar"></i></div>
+    <div class="promptsub" id="memHint">${c.sub}</div>
+    <div class="stack"><button class="tinybtn" id="bail4">switch challenge</button></div>`;
+  show('challenge');
+  const padEls=[...body.querySelectorAll('.pad')];
+  $('#bail4').onclick=()=>startChallenge();
+  function flash(i,ms){ return new Promise(r=>{ if(!padEls[i]||!padEls[i].isConnected) return r(); padEls[i].classList.add('lit'); navigator.vibrate&&navigator.vibrate(30);
+    setTimeout(()=>{ if(padEls[i]) padEls[i].classList.remove('lit'); setTimeout(r,140); }, ms||380); }); }
+  async function playSeq(){ locked=true; const h=$('#memHint'); if(h) h.textContent='Watch closely…';
+    await new Promise(r=>setTimeout(r,500));
+    for(const i of seq){ if(!padEls[0].isConnected) return; await flash(i); }
+    if(!padEls[0].isConnected) return;
+    locked=false; const h2=$('#memHint'); if(h2) h2.textContent='Your turn — repeat it'; }
+  function newRound(){ seq.push(rnd(0,3)); input=[];
+    $('#memLvl').textContent=seq.length;
+    $('#memBar').style.width=((seq.length-1)/need*100)+'%'; setDawn((seq.length-1)/need);
+    playSeq(); }
+  padEls.forEach(p=>p.addEventListener('pointerdown',e=>{
+    e.preventDefault(); if(locked) return;
+    const i=+p.dataset.i; flash(i,160); input.push(i);
+    if(input[input.length-1]!==seq[input.length-1]){
+      $('#memHint').textContent='Wrong — back to the start'; toast('Nope. Restarting.');
+      seq=[]; locked=true; setDawn(0); $('#memBar').style.width='0%'; setTimeout(newRound,800); return;
+    }
+    if(input.length===seq.length){
+      if(seq.length>=need){ setDawn(1); succeed(c); }
+      else { locked=true; setTimeout(newRound,650); }
+    }
+  }));
+  newRound();
+}
+
+async function cameraChallenge(c){
+  const obj = c.id==='object' ? OBJECTS[Math.floor(Math.random()*OBJECTS.length)] : '';
+  const body=$('#challengeBody');
+  body.innerHTML=`
+    <div class="ringlabel">proof required</div>
+    <div class="prompt">${c.prompt(obj)}</div>
+    <div class="promptsub">${c.sub}</div>
+    <video id="cam" autoplay playsinline muted></video>
+    <img class="shot hidden" id="shot"/>
+    <div class="stack">
+      <button class="btn" id="snap">📸 Capture proof</button>
+      <button class="btn" id="retake" hidden>Retake</button>
+      <button class="btn" id="accept" hidden>This counts — wake up</button>
+      <button class="tinybtn" id="bail2">switch challenge</button>
+      <button class="tinybtn" id="noCam" style="color:var(--coral)">📷 camera not working? do a no-camera one</button>
+    </div>`;
+  show('challenge');
+  $('#bail2').onclick=()=>{ stopCam(); startChallenge(); };
+  $('#noCam').onclick=()=>{ stopCam(); tapChallenge(CHALLENGES.find(x=>x.id==='tap'), 'No camera — tap your way out instead'); };
+
+  try{
+    const facing = (c.id==='object'||c.id==='grass'||c.id==='breakfast') ? 'environment' : 'user';
+    stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:facing}});
+    $('#cam').srcObject=stream;
+  }catch(e){
+    // camera blocked/denied/unavailable -> fall back to tap-the-sun, credited honestly
+    tapChallenge(CHALLENGES.find(x=>x.id==='tap'), "Camera's off — tap your way out instead");
+    return;
+  }
+
+  $('#snap').onclick=()=>{
+    const v=$('#cam'); const cv=document.createElement('canvas');
+    cv.width=v.videoWidth||480; cv.height=v.videoHeight||640;
+    const ctx=cv.getContext('2d'); ctx.drawImage(v,0,0,cv.width,cv.height);
+    // brightness check for "go outside"
+    if(c.bright){
+      const d=ctx.getImageData(0,0,cv.width,cv.height).data; let sum=0;
+      for(let i=0;i<d.length;i+=40){ sum+=(d[i]+d[i+1]+d[i+2]); }
+      const avg=sum/(d.length/40)/3;
+      if(avg<55){ toast('Too dark — are you actually outside? Try again.'); return; }
+    }
+    $('#shot').src=cv.toDataURL('image/jpeg',.8);
+    $('#shot').classList.remove('hidden'); v.classList.add('hidden');
+    $('#snap').hidden=true; $('#retake').hidden=false; $('#accept').hidden=false;
+    setDawn(.6);
+  };
+  $('#retake').onclick=()=>{ $('#shot').classList.add('hidden'); $('#cam').classList.remove('hidden');
+    $('#snap').hidden=false; $('#retake').hidden=true; $('#accept').hidden=true; setDawn(0); };
+  $('#accept').onclick=()=>{ stopCam(); succeed(c); };
+}
+function stopCam(){ if(stream){ stream.getTracks().forEach(t=>t.stop()); stream=null; } }
+
+/* ===================== SUCCESS + progression ===================== */
+const THEMES={
+  default:{gold:'#FFC24B',coral:'#FF6B4A',night:'#0E0B22',night2:'#1a1238',indigo:'#241a4d'},
+  aurora :{gold:'#5BE0A6',coral:'#22B8C0',night:'#06211c',night2:'#0b2e26',indigo:'#0f3d33'},
+  vapor  :{gold:'#FF8AD8',coral:'#8A5BFF',night:'#160a2e',night2:'#241046',indigo:'#3a1a6b'},
+  ember  :{gold:'#FFB24B',coral:'#E0352B',night:'#1a0606',night2:'#2a0a08',indigo:'#3d100c'},
+  mono   :{gold:'#f2f2f2',coral:'#9aa0a6',night:'#0a0a0c',night2:'#141417',indigo:'#1f1f24'},
+  galaxy :{gold:'#b388ff',coral:'#5e7bff',night:'#05030f',night2:'#0c0820',indigo:'#1a1040'}
+};
+const RARITY={
+  common:{name:'Common',color:'#9aa0a6'}, rare:{name:'Rare',color:'#4d8bff'},
+  epic:{name:'Epic',color:'#b15bff'}, mythic:{name:'Mythic',color:'#ff5bc0'}, legendary:{name:'Legendary',color:'#ffc24b'}
+};
+function rarityTag(r){ const x=RARITY[r]; return x?`<span class="rar" style="color:${x.color};border-color:${x.color}">${x.name}</span>`:''; }
+
+/* Sun skins: rendered animated orbs (not emoji). Rarity drives the flair + sound richness. */
+const SUNS={
+  default:{name:'Classic Sun', icon:'☀️', rarity:'common', cost:0,   c1:'#FFD27A',c2:'#FF6B4A',glow:'#FF8A4A', sound:{type:'sawtooth',freqs:[660,880]},            desc:'The original sunrise orb.'},
+  moon:   {name:'Moonlight',   icon:'🌙', rarity:'common', cost:90,  c1:'#eef3ff',c2:'#8aa0d8',glow:'#9ab0ff', sound:{type:'sine',freqs:[440,587]},               desc:'A cool silver glow.'},
+  ocean:  {name:'Tide',        icon:'🌊', rarity:'rare',   cost:160, c1:'#9fefff',c2:'#1f6bd0',glow:'#3aa0ff', sound:{type:'sine',freqs:[392,523,659]},           desc:'Ocean blues with a soft shimmer.'},
+  ember:  {name:'Ember',       icon:'🔥', rarity:'rare',   cost:160, c1:'#ffd08a',c2:'#d0331f',glow:'#ff6a3a', sound:{type:'triangle',freqs:[523,392,440]},        desc:'A smouldering flicker.'},
+  galaxy: {name:'Galaxy',      icon:'🌌', rarity:'epic',   cost:260, c1:'#c8a8ff',c2:'#3a1a8a',glow:'#8a5bff', sound:{type:'sine',freqs:[330,494,659]},           desc:'A deep-space starfield with a drifting spiral.'},
+  city:   {name:'City Night',  icon:'🌃', rarity:'epic',   cost:280, c1:'#ffd27a',c2:'#5e3a8a',glow:'#ff8a5a', sound:{type:'triangle',freqs:[392,523,587]},        desc:'A glowing city skyline under a starry dusk.'},
+  aurora: {name:'Aurora',      icon:'🌈', rarity:'epic',   cost:260, c1:'#7dffc0',c2:'#3a8ac0',glow:'#54e0a8', sound:{type:'triangle',freqs:[440,554,659]},        desc:'Shifting northern-lights hues + rays.'},
+  solar:  {name:'Solar Flare', icon:'🌞', rarity:'mythic', cost:430, c1:'#fff3c2',c2:'#ff4500',glow:'#ff8a1a', sound:{type:'sawtooth',freqs:[523,659,784]},        desc:'A blazing core, rotating flares and sparks.'},
+  nebula: {name:'Nebula',      icon:'🌫️', rarity:'mythic', cost:430, c1:'#ff5bc0',c2:'#5e7bff',glow:'#b15bff', sound:{type:'square',freqs:[392,523,659,784]},      desc:'A swirling cloud of colour with sparks.'},
+  phoenix:{name:'Phoenix',     icon:'🦅', rarity:'legendary',cost:700,c1:'#fff1c2',c2:'#c0143a',glow:'#ff7a1a', sound:{type:'sawtooth',freqs:[440,554,659,880]},    desc:'Reborn in fire — rays, sparks, an orbiting ring.'},
+  prism:  {name:'Prism',       icon:'💎', rarity:'legendary',cost:700,c1:'#ffffff',c2:'#b15bff',glow:'#54e0a8', sound:{type:'triangle',freqs:[523,659,784,1047]},   desc:'A rotating rainbow with full sparkle.'},
+  comet:  {name:'Comet',       icon:'☄️', rarity:'mythic', cost:380, daily:true, c1:'#bfe0ff',c2:'#3a5bd0',glow:'#7aa0ff', sound:{type:'sine',freqs:[494,659,988]}, desc:'Rare streaking comet. Daily Deals only.'}
+};
+const BADGES=[{at:1,icon:'🌱',name:'Sprout'},{at:7,icon:'🔥',name:'On Fire'},{at:30,icon:'⭐',name:'Star Riser'},{at:100,icon:'👑',name:'Legend'}];
+
+const CATALOG={
+  power:[
+    {id:'freeze',   icon:'🧊', name:'Streak Freeze',    cost:50,  kind:'consumable', desc:'Auto-protects your streak the next day you miss. Stacks up.'},
+    {id:'snooze',   icon:'⏰', name:'Snooze Token',     cost:20,  kind:'consumable', desc:'A one-off extra snooze for a rough morning — no math to earn it.'},
+    {id:'easy',     icon:'🎚️', name:'Easy Pass',        cost:30,  kind:'consumable', desc:'Swap a ringing challenge for a quick easy one.'},
+    {id:'insurance',icon:'🛡️', name:'Streak Insurance', cost:300, kind:'perk',       desc:'If a 7+ day streak is about to break with no freeze, auto-buys one with your coins.'},
+    {id:'customsound',icon:'🎙️', name:'Custom Alarm Sound', cost:200, kind:'customsound', rarity:'epic', desc:'Upload a short clip (under ~1MB) and set it as your alarm tone.'},
+  ],
+  looks:[
+    {id:'theme:ember',  icon:'🌋', name:'Ember Sky',    cost:120, kind:'theme', val:'ember',  rarity:'rare', desc:'Deep red volcanic dawn.'},
+    {id:'theme:mono',   icon:'🌑', name:'Mono Sky',     cost:120, kind:'theme', val:'mono',   rarity:'rare', desc:'Clean black & white.'},
+    {id:'theme:aurora', icon:'🌌', name:'Aurora Sky',   cost:180, kind:'theme', val:'aurora', rarity:'epic', desc:'Teal & green northern-lights dawn.'},
+    {id:'theme:vapor',  icon:'🌆', name:'Vaporwave Sky',cost:180, kind:'theme', val:'vapor',  rarity:'epic', desc:'Pink & purple synthwave dawn.'},
+    {id:'theme:galaxy', icon:'🌠', name:'Galaxy Sky',   cost:320, kind:'theme', val:'galaxy', rarity:'legendary', daily:true, desc:'Rare deep-space sky. Daily Deals only.'},
+    {id:'personality',  icon:'🔤', name:'Personality Pack', cost:150, kind:'unlock', rarity:'rare', desc:'Spicier wake-up phrases + let Daybreak call you by name.'},
+  ]
+};
+// build sun-skin shop entries from SUNS (skip the default)
+Object.keys(SUNS).filter(k=>k!=='default').forEach(k=>{ const s=SUNS[k];
+  CATALOG.looks.push({id:'sun:'+k, icon:s.icon, name:s.name, cost:s.cost, kind:'sun', val:k, rarity:s.rarity, daily:!!s.daily, desc:s.desc});
+});
+
+function coinMult(){ const base = maxStreakTier(streak); return Math.round((base + prestige*0.1)*10)/10; }
+function maxStreakTier(s){ return s>=100?3 : s>=30?2 : s>=7?1.5 : 1; }
+function applyTheme(name){ const t=THEMES[name]||THEMES.default; const r=document.documentElement.style;
+  r.setProperty('--gold',t.gold); r.setProperty('--coral',t.coral); r.setProperty('--night',t.night);
+  r.setProperty('--night2',t.night2); r.setProperty('--indigo',t.indigo); equipTheme=name; }
+function renderSunInto(el, skinId){ if(!el) return; const sk=SUNS[skinId]||SUNS.default;
+  el.className = el.className.replace(/\b(rar-\w+|skin-[\w]+|sunOrb)\b/g,'').replace(/\s+/g,' ').trim()+` sunOrb rar-${sk.rarity} skin-${skinId}`;
+  el.style.setProperty('--c1',sk.c1); el.style.setProperty('--c2',sk.c2); el.style.setProperty('--glow',sk.glow);
+  el.innerHTML=`<div class="s-aura"></div><div class="s-scene">${sceneHTML(skinId)}</div><div class="s-rays"></div><div class="s-ring"></div>`;
+}
+function sunMockMarkup(skinId){ const sk=SUNS[skinId]||SUNS.default;
+  return `<div class="pmOrb sunOrb rar-${sk.rarity} skin-${skinId}" style="--c1:${sk.c1};--c2:${sk.c2};--glow:${sk.glow}">
+    <div class="s-aura"></div><div class="s-scene">${sceneHTML(skinId)}</div><div class="s-rays"></div><div class="s-ring"></div></div>`;
+}
+/* scene builders — little dioramas clipped inside the orb */
+function starsHTML(n){ let s=''; let seed=n*7+13;
+  const r=()=>{ seed=(seed*9301+49297)%233280; return seed/233280; };
+  for(let i=0;i<n;i++){ const x=(r()*100).toFixed(1), y=(r()*70).toFixed(1), d=(r()*2+0.6).toFixed(1), dl=(r()*2).toFixed(2);
+    s+=`<i class="star" style="left:${x}%;top:${y}%;width:${d}px;height:${d}px;animation-delay:${dl}s"></i>`; }
+  return s;
+}
+function citySVG(){
+  return `<svg class="city" viewBox="0 0 100 40" preserveAspectRatio="none">
+    <path fill="#0a0618" d="M0,40 L0,24 L6,24 L6,18 L12,18 L12,26 L18,26 L18,14 L22,14 L22,9 L26,9 L26,14 L30,14 L30,22 L38,22 L38,16 L44,16 L44,11 L48,11 L48,16 L54,16 L54,25 L62,25 L62,13 L68,13 L68,20 L76,20 L76,15 L82,15 L82,23 L90,23 L90,18 L96,18 L96,26 L100,26 L100,40 Z"/>
+    <g fill="#ffd98a" opacity=".85"><rect x="20" y="12" width="1.4" height="1.4"/><rect x="24" y="16" width="1.4" height="1.4"/><rect x="40" y="14" width="1.4" height="1.4"/><rect x="45" y="18" width="1.4" height="1.4"/><rect x="64" y="16" width="1.4" height="1.4"/><rect x="78" y="18" width="1.4" height="1.4"/><rect x="9" y="20" width="1.4" height="1.4"/><rect x="33" y="18" width="1.4" height="1.4"/></g></svg>`;
+}
+function mountSVG(){ return `<svg class="mount" viewBox="0 0 100 40" preserveAspectRatio="none"><path fill="#04141a" d="M0,40 L0,30 L20,16 L34,28 L50,12 L66,26 L82,15 L100,30 L100,40 Z"/></svg>`; }
+function sceneHTML(id){
+  switch(id){
+    case 'moon': return `<div class="sky" style="background:linear-gradient(180deg,#0a1230,#23306a)"></div>${starsHTML(16)}<div class="cmoon"></div>`;
+    case 'city': return `<div class="sky" style="background:linear-gradient(180deg,#1a1240,#5e3a8a 62%,#ff8a5a)"></div>${starsHTML(12)}<div class="cmoon sm"></div>${citySVG()}`;
+    case 'ocean': return `<div class="sky" style="background:linear-gradient(180deg,#bfe9ff,#3aa0ff 58%)"></div><div class="csun lowsun"></div><div class="wave w1"></div><div class="wave w2"></div><div class="wave w3"></div>`;
+    case 'ember': return `<div class="sky" style="background:linear-gradient(180deg,#2a0a08,#7a1a10 78%)"></div><div class="ember e1"></div><div class="ember e2"></div><div class="ember e3"></div><div class="ember e4"></div><div class="flame"></div>`;
+    case 'galaxy': return `<div class="sky" style="background:radial-gradient(circle at 50% 60%,#3a1a8a55,#0a0420 78%)"></div>${starsHTML(34)}<div class="spiral"></div>`;
+    case 'aurora': return `<div class="sky" style="background:linear-gradient(180deg,#04111a,#0a2630)"></div>${starsHTML(18)}<div class="aband a1"></div><div class="aband a2"></div>${mountSVG()}`;
+    case 'solar': return `<div class="sky" style="background:radial-gradient(circle at 50% 50%,#ff9a1a,#6a1200 80%)"></div><div class="csun bigsun"></div><div class="flare f1"></div><div class="flare f2"></div>`;
+    case 'nebula': return `<div class="sky neb"></div>${starsHTML(20)}`;
+    case 'phoenix': return `<div class="sky" style="background:linear-gradient(180deg,#2a0606,#c0143a 72%,#ff7a1a)"></div><div class="ember e1"></div><div class="ember e2"></div><div class="ember e3"></div><div class="ember e4"></div><div class="ember e5"></div><div class="flame big"></div><div class="flame big f2"></div>`;
+    case 'prism': return `<div class="sky prism"></div><div class="prismShine"></div>`;
+    case 'comet': return `<div class="sky" style="background:linear-gradient(180deg,#060a20,#101a4a)"></div>${starsHTML(20)}<div class="cometObj"></div>`;
+    default: return `<div class="sky" style="background:linear-gradient(180deg,#7ec8ff,#ffd27a 66%,#ff8a4a)"></div><div class="csun"></div><div class="cloud c1"></div><div class="cloud c2"></div>`;
+  }
+}
+/* play a short preview of a skin's alarm sound (separate from the live alarm) */
+function playSkinSound(skinId){
+  try{
+    ac = ac || new (window.AudioContext||window.webkitAudioContext)();
+    if(ac.state==='suspended') ac.resume();
+    if(skinId==='__custom'){
+      if(!customSoundURL) return;
+      const el=ensureCustomEl(); if(!el) return;
+      try{ el.loop=false; el.currentTime=0; }catch(e){}
+      el.play().catch(()=>{});
+      clearTimeout(playSkinSound._t); playSkinSound._t=setTimeout(()=>{ try{ el.pause(); }catch(e){} }, 4000);
+      return;
+    }
+    const g=ac.createGain(); g.connect(ac.destination); g.gain.value=1;
+    const p=SOUNDS[skinId]||SOUNDS.default;
+    const dur=playCycle(p, ac.currentTime+0.03, g);
+    setTimeout(()=>{ try{ g.disconnect(); }catch(e){} }, (dur+0.5)*1000);
+  }catch(e){}
+}
+function applySun(skinId){ if(!SUNS[skinId]) skinId='default'; equipSun=skinId; renderSunInto($('#ringSunOrb'), skinId); }
+
+async function persistProgress(){
+  await save('streak',streak); await save('coins',coins); await save('freezes',freezes);
+  await save('snoozeTokens',snoozeTokens); await save('easyPasses',easyPasses); await save('insurance',insurance);
+  await save('themesOwned',themesOwned); await save('sunsOwned',sunsOwned);
+  await save('equipTheme',equipTheme); await save('equipSun',equipSun);
+  await save('personality',personality); await save('userName',userName);
+  await save('prestige',prestige); await save('maxStreak',maxStreak);
+  await save('doneDates',doneDates); await save('frozenDates',frozenDates); await save('lastDone',lastDone);
+  await save('customUnlocked',customUnlocked); await save('useCustomSound',useCustomSound);
+  await save('wakeLog',wakeLog); await save('workoutDate',workoutDate); await save('workoutEarned',workoutEarned);
+}
+
+async function succeed(c){
+  stopAlarm(); stopCam(); teardownMotion();
+  if(runtime._pose){ try{runtime._pose.stop();}catch(e){} runtime._pose=null; }
+  setDawn(1);
+  const today=dayKey();
+  let firstToday=false, kept=false, award=0;
+  if(lastDone===today){
+    // already beat the alarm today — no double credit
+  } else {
+    firstToday=true;
+    if(lastDone && daysBetween(lastDone,today)===1) { streak+=1; kept=true; }
+    else streak=1;
+    if(streak>maxStreak) maxStreak=streak;
+    lastDone=today;
+    award=Math.round(10*coinMult());
+    coins+=award;
+    if(!doneDates.includes(today)) doneDates.push(today);
+    if(runtime.ringStart){
+      const secs=Math.round((Date.now()-runtime.ringStart)/1000);
+      const [h,m]=(settings.time||'07:00').split(':').map(Number);
+      const tgt=new Date(); tgt.setHours(h,m,0,0);
+      const lateMin=Math.round((Date.now()-tgt)/60000);
+      wakeLog.push({d:today, secs, lateMin}); if(wakeLog.length>60) wakeLog=wakeLog.slice(-60);
+    }
+  }
+  await persistProgress();
+
+  const who = userName?`${userName}, ` : '';
+  $('#successMsg').textContent = `${c.icon} ${c.name} — done.`;
+  const note = firstToday ? (kept?`${who}streak extended! +${award} coins`:`${who}day 1 of a new streak · +${award} coins`) : `Already counted today — nice extra effort`;
+  $('#successNote').textContent = note;
+  renderWakeStats();
+  refreshStats();
+  navigator.vibrate&&navigator.vibrate([60,40,60]);
+  show('success');
+}
+
+/* mini calendar */
+function renderWakeStats(){
+  const el=$('#successStats'); if(!el) return;
+  const now=new Date();
+  const rows=[];
+  // 1) how long it took to beat the alarm
+  if(runtime.ringStart){
+    const secs=Math.round((Date.now()-runtime.ringStart)/1000);
+    const dur = secs<60?`${secs}s`:`${Math.floor(secs/60)}m ${secs%60}s`;
+    let tag = secs<30?'⚡ lightning fast':secs<90?'solid pace':'took your time';
+    rows.push(`<div class="ws"><span>Time to get up</span><b>${dur} · ${tag}</b></div>`);
+  }
+  // 2) target vs actual wake time
+  if(settings.time){
+    const [h,m]=settings.time.split(':').map(Number);
+    const target=new Date(now); target.setHours(h,m,0,0);
+    const diffMin=Math.round((now-target)/60000);
+    const actual=fmt(`${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`);
+    let line;
+    if(Math.abs(diffMin)<=120){
+      if(diffMin<=2 && diffMin>=-5) line=`up at ${actual} · right on time 🎯`;
+      else if(diffMin>2) line=`up at ${actual} · ${diffMin} min after your ${fmt(settings.time)} target`;
+      else line=`up at ${actual} · ${-diffMin} min early — nice`;
+    } else { line=`up at ${actual}`; }
+    rows.push(`<div class="ws"><span>Wake time</span><b>${line}</b></div>`);
+  }
+  // 3) snoozes
+  if(runtime.snoozeUsed>0) rows.push(`<div class="ws"><span>Snoozes used</span><b>${runtime.snoozeUsed}</b></div>`);
+  el.innerHTML=rows.join('');
+}
+function renderCal(){
+  const cal=$('#cal'); if(!cal) return;
+  const now=new Date(), y=now.getFullYear(), mo=now.getMonth();
+  const months=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const mh=$('#calMonth'); if(mh) mh.textContent=`${months[mo]} ${y}`;
+  const startDow=new Date(y,mo,1).getDay();
+  const days=new Date(y,mo+1,0).getDate();
+  const today=dayKey();
+  let html=['S','M','T','W','T','F','S'].map(d=>`<div class="cdow">${d}</div>`).join('');
+  for(let i=0;i<startDow;i++) html+=`<div class="cell empty"></div>`;
+  for(let d=1;d<=days;d++){
+    const k=dayKey(new Date(y,mo,d));
+    let cls='cell';
+    if(doneDates.includes(k)) cls+=' done'; else if(frozenDates.includes(k)) cls+=' frozen';
+    if(k===today) cls+=' today';
+    if(d>now.getDate()) cls+=' future';
+    html+=`<div class="${cls}"><span>${d}</span></div>`;
+  }
+  cal.innerHTML=html;
+}
+function renderBadges(){
+  const b=$('#badges'); if(!b) return;
+  b.innerHTML = BADGES.map(bd=>{
+    const got = maxStreak>=bd.at;
+    return `<span class="badge ${got?'got':''}" title="${bd.name} — ${bd.at}-day streak">${bd.icon}</span>`;
+  }).join('');
+}
+function renderLifeStats(){
+  const el=$('#lifeStats'); if(!el) return;
+  const rows=[`<div class="ls"><b>${doneDates.length}</b><span>mornings won</span></div>`,
+              `<div class="ls"><b>${maxStreak}</b><span>best streak</span></div>`];
+  if(wakeLog.length){
+    const avgSecs=Math.round(wakeLog.reduce((a,b)=>a+(b.secs||0),0)/wakeLog.length);
+    const avg = avgSecs<60?`${avgSecs}s`:`${Math.floor(avgSecs/60)}m ${avgSecs%60}s`;
+    const onTime=Math.round(wakeLog.filter(x=>(x.lateMin||0)<=5).length/wakeLog.length*100);
+    rows.push(`<div class="ls"><b>${avg}</b><span>avg to get up</span></div>`);
+    rows.push(`<div class="ls"><b>${onTime}%</b><span>on time</span></div>`);
+  }
+  el.innerHTML=rows.join('');
+}
+function refreshStats(){
+  ['#cStreak'].forEach(s=>{const e=$(s); if(e)e.textContent=streak;});
+  ['#cCoins','#shopCoins','#cCoins2'].forEach(s=>{const e=$(s); if(e)e.textContent=coins;});
+  ['#streakNum','#streakNum2','#streakNum3'].forEach(s=>{const e=$(s); if(e)e.textContent=streak;});
+  renderCal(); renderBadges(); renderLifeStats();
+  const he=$('#homeEyebrow'); if(he) he.textContent = userName ? `let's go, ${userName}` : 'no mercy mornings';
+}
+
+/* ---------- daily deals (rotates each day, deterministic per date) ---------- */
+function hashStr(s){ let h=2166136261; for(let i=0;i<s.length;i++){ h^=s.charCodeAt(i); h=Math.imul(h,16777619);} return h>>>0; }
+function mulberry32(a){ return function(){ a|=0;a=a+0x6D2B79F5|0; let t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+function dailyDeals(){
+  const rng=mulberry32(hashStr('daybreak-deals-'+dayKey()));
+  const normal=[...CATALOG.power,...CATALOG.looks].filter(i=>!i.daily);
+  const rares=[...CATALOG.power,...CATALOG.looks].filter(i=>i.daily);
+  const deals=[], used=new Set();
+  function pick(arr){ if(!arr.length) return null; let it; let tries=0; do{ it=arr[Math.floor(rng()*arr.length)]; tries++; }while(used.has(it.id)&&tries<20); if(used.has(it.id))return null; used.add(it.id); return it; }
+  for(let slot=0; slot<3; slot++){
+    let it;
+    // 3rd slot has a ~28% chance to roll a rare exclusive
+    if(slot===2 && rng()<0.28 && rares.length) it=pick(rares);
+    if(!it) it=pick(normal);
+    if(!it) continue;
+    const r=rng();
+    let pct = r<0.12?60 : r<0.35?40 : r<0.68?25 : 15;
+    deals.push({id:it.id, pct, rare: it.daily===true || pct>=60});
+  }
+  return deals;
+}
+function dealRow(d){
+  const it=findItem(d.id); if(!it) return '';
+  const price=Math.max(1,Math.round(it.cost*(1-d.pct/100)));
+  const owns=ownsItem(it);
+  const equipped=(it.kind==='theme'&&equipTheme===it.val)||(it.kind==='sun'&&equipSun===it.val);
+  let action;
+  if(equipped) action=`<span class="owned">Equipped</span>`;
+  else if(owns && it.kind!=='consumable') action=(it.kind==='theme'||it.kind==='sun')?`<button class="buybtn equip" data-equip="${it.kind}:${it.val}">Equip</button>`:`<span class="owned">Owned</span>`;
+  else action=`<button class="buybtn" data-deal="${it.id}" data-price="${price}" ${coins<price?'disabled':''}><span class="wasprice">🪙${it.cost}</span>🪙 ${price}</button>`;
+  return `<div class="shopitem rb-${it.rarity||'common'} ${d.rare?'rare':''}"><div class="ico">${it.icon}</div>
+    <div class="info"><div class="iname">${it.name} ${rarityTag(it.rarity)} <span class="deal">−${d.pct}%</span></div>
+    <div class="idesc">${it.desc}</div></div>
+    <div class="acts"><button class="prevbtn" data-preview="${it.id}">👁 Preview</button>${action}</div></div>`;
+}
+function msToMidnight(){ const n=new Date(), m=new Date(n); m.setHours(24,0,0,0); return m-n; }
+function fmtReset(){ const ms=msToMidnight(), h=Math.floor(ms/3.6e6), m=Math.floor(ms%3.6e6/6e4); return `resets in ${h}h ${m}m`; }
+
+/* ---------- shop rendering ---------- */
+function ownsItem(it){
+  if(it.kind==='consumable') return it.id==='freeze'?freezes : it.id==='snooze'?snoozeTokens : easyPasses;
+  if(it.kind==='perk') return insurance?1:0;
+  if(it.kind==='theme') return themesOwned.includes(it.val)?1:0;
+  if(it.kind==='sun') return sunsOwned.includes(it.val)?1:0;
+  if(it.kind==='unlock') return personality?1:0;
+  if(it.kind==='customsound') return customUnlocked?1:0;
+  return 0;
+}
+function itemButton(it){
+  const own=ownsItem(it);
+  if(it.kind==='consumable') return `<button class="buybtn" data-buy="${it.id}" ${coins<it.cost?'disabled':''}>🪙 ${it.cost}</button>`;
+  if(it.kind==='perk'||it.kind==='unlock') return own?`<span class="owned">Owned</span>`:`<button class="buybtn" data-buy="${it.id}" ${coins<it.cost?'disabled':''}>🪙 ${it.cost}</button>`;
+  if(it.kind==='customsound') return own?`<button class="buybtn equip" data-preview="${it.id}">Set up</button>`:`<button class="buybtn" data-buy="${it.id}" ${coins<it.cost?'disabled':''}>🪙 ${it.cost}</button>`;
+  if(it.kind==='theme'){ const eq=equipTheme===it.val; if(eq) return `<span class="owned">Equipped</span>`;
+    return own?`<button class="buybtn equip" data-equip="theme:${it.val}">Equip</button>`:`<button class="buybtn" data-buy="${it.id}" ${coins<it.cost?'disabled':''}>🪙 ${it.cost}</button>`; }
+  if(it.kind==='sun'){ const eq=equipSun===it.val; if(eq) return `<span class="owned">Equipped</span>`;
+    return own?`<button class="buybtn equip" data-equip="sun:${it.val}">Equip</button>`:`<button class="buybtn" data-buy="${it.id}" ${coins<it.cost?'disabled':''}>🪙 ${it.cost}</button>`; }
+  return '';
+}
+function itemRow(it){
+  const own=ownsItem(it);
+  const ownTag = (it.kind==='consumable' && own)?`<span class="owned">×${own}</span>`:'';
+  return `<div class="shopitem rb-${it.rarity||'common'}"><div class="ico">${it.icon}</div>
+    <div class="info"><div class="iname">${it.name} ${rarityTag(it.rarity)} ${ownTag}</div><div class="idesc">${it.desc}</div></div>
+    <div class="acts"><button class="prevbtn" data-preview="${it.id}">👁 Preview</button>${itemButton(it)}</div></div>`;
+}
+function renderShop(){
+  const wrap=$('#shopItems');
+  const mult=coinMult();
+  let html = `<div class="grouplabel">✨ Daily Deals <span class="hintpill" id="dealReset">${fmtReset()}</span></div>` + dailyDeals().map(dealRow).join('');
+  html += `<div class="grouplabel">Power-ups</div>` + CATALOG.power.filter(i=>!i.daily).map(itemRow).join('');
+  html += `<div class="grouplabel">Looks</div>` + CATALOG.looks.filter(i=>!i.daily).map(itemRow).join('');
+  // personalization name field
+  if(personality){
+    html += `<div class="shopitem"><div class="ico">🙂</div><div class="info">
+      <div class="iname">Your name</div><div class="idesc">Daybreak will use this in your morning messages.</div>
+      <input id="nameInput" class="lvlsel" style="margin-top:8px;width:100%" maxlength="16" placeholder="your name" value="${userName.replace(/"/g,'')}"></div></div>`;
+  }
+  html += `<div class="grouplabel">Progression</div>
+    <div class="shopitem"><div class="ico">📈</div><div class="info">
+      <div class="iname">Coin multiplier <span class="owned">${mult}×</span></div>
+      <div class="idesc">Longer streaks earn more per day. Prestige adds +0.1× each.</div></div></div>
+    <div class="shopitem"><div class="ico">🌅</div><div class="info">
+      <div class="iname">Prestige <span class="owned">Lv ${prestige}</span></div>
+      <div class="idesc">At a 30-day streak, reset it for a permanent badge and +200 coins.</div></div>
+      <button class="buybtn" id="prestigeBtn" ${streak<30?'disabled':''}>${streak<30?'30-day':'Prestige'}</button></div>`;
+  wrap.innerHTML=html;
+
+  wrap.querySelectorAll('[data-buy]').forEach(b=>b.onclick=()=>buyItem(b.dataset.buy));
+  wrap.querySelectorAll('[data-deal]').forEach(b=>b.onclick=()=>buyItem(b.dataset.deal, +b.dataset.price));
+  wrap.querySelectorAll('[data-equip]').forEach(b=>b.onclick=()=>equipItem(b.dataset.equip));
+  wrap.querySelectorAll('[data-preview]').forEach(b=>b.onclick=()=>openPreview(b.dataset.preview));
+  const ni=$('#nameInput'); if(ni) ni.onchange=async()=>{ userName=ni.value.trim().slice(0,16); await persistProgress(); refreshStats(); toast(userName?`Hey ${userName} 👋`:'Name cleared'); };
+  const pb=$('#prestigeBtn'); if(pb && streak>=30) pb.onclick=()=>doPrestige();
+}
+function findItem(id){ return [...CATALOG.power,...CATALOG.looks].find(x=>x.id===id); }
+function mockHTML(t, skinId){
+  return `<div class="phoneMock" style="--mg:${t.gold};--mc:${t.coral};--mn:${t.night};--mi:${t.indigo}">
+    <div class="pmTop">☀ daybreak</div>
+    <div class="pmEye">no mercy mornings</div>
+    <div class="pmTitle">Get up.</div>
+    ${sunMockMarkup(skinId||'default')}
+    <div class="pmTime">7:00 AM</div>
+  </div>`;
+}
+function openPreview(id){
+  const it=findItem(id); if(!it) return;
+  const b=$('#previewBody'); let html='';
+  const owns=ownsItem(it);
+  if(it.kind==='theme'){
+    html=`<h3>${it.name}</h3>${mockHTML(THEMES[it.val], equipSun)}<p>Here's your home screen in this sky.</p>`;
+  } else if(it.kind==='sun'){
+    html=`<h3>${it.name}</h3>${mockHTML(THEMES[equipTheme]||THEMES.default, it.val)}<p>This is the orb you'll wake up to.</p>
+      <button class="modalbtn alt" id="previewSound">🔊 Hear its alarm sound</button>`;
+  } else if(it.kind==='unlock'){
+    html=`<h3>${it.icon} ${it.name}</h3><div class="previewGlyph" style="margin:14px 0">🔤</div>
+      <p>Adds sassier wake-up lines like “Nice try bed, you almost had me” — and lets Daybreak greet you by name.</p>`;
+  } else if(it.kind==='customsound'){
+    if(owns){
+      html=`<h3>${it.icon} ${it.name}</h3>
+        <p>${customSoundURL?'A clip is loaded. Replace it, test it, or toggle it on/off.':'Pick a short audio clip (under ~1MB). It becomes your alarm tone when turned on.'}</p>
+        <label class="modalbtn alt" for="customFile" style="display:block">📁 ${customSoundURL?'Replace clip':'Choose a clip'}</label>
+        <input id="customFile" type="file" accept="audio/*" style="display:none" />
+        <button class="modalbtn alt" id="customTest" ${customSoundURL?'':'disabled'}>🔊 Test clip</button>
+        <button class="modalbtn" id="customToggle" ${customSoundURL?'':'disabled'}>${useCustomSound?'✓ Using custom sound — tap to turn off':'Use as my alarm'}</button>
+        <p style="font-size:11px;margin-top:10px">Stored on this device only. On iPhone the ring switch must be on to hear it.</p>`;
+    } else {
+      html=`<h3>${it.icon} ${it.name}</h3><div class="previewGlyph" style="margin:14px 0">🎙️</div><p>${it.desc}</p>`;
+    }
+  } else {
+    html=`<h3>${it.icon} ${it.name}</h3><div class="previewGlyph" style="margin:14px 0">${it.icon}</div><p>${it.desc}</p>`;
+  }
+  // action inside the modal
+  if(!owns && it.kind!=='theme' && it.kind!=='sun' && it.kind!=='customsound') html+=`<button class="modalbtn" id="previewBuy" ${coins<it.cost?'disabled':''}>${coins<it.cost?'Need more coins':'Buy 🪙 '+it.cost}</button>`;
+  else if(it.kind==='customsound' && !owns) html+=`<button class="modalbtn" id="previewBuy" ${coins<it.cost?'disabled':''}>${coins<it.cost?'Need more coins':'Buy 🪙 '+it.cost}</button>`;
+  else if(it.kind==='theme'||it.kind==='sun'){
+    const equipped = (it.kind==='theme'?equipTheme===it.val:equipSun===it.val);
+    if(equipped) html+=`<button class="modalbtn" disabled>Equipped</button>`;
+    else if(owns) html+=`<button class="modalbtn" id="previewEquip">Equip</button>`;
+    else html+=`<button class="modalbtn" id="previewBuy" ${coins<it.cost?'disabled':''}>${coins<it.cost?'Need more coins':'Buy 🪙 '+it.cost}</button>`;
+  }
+  b.innerHTML=html;
+  $('#previewModal').classList.add('show');
+  const pb=$('#previewBuy'); if(pb) pb.onclick=async()=>{ await buyItem(it.id); closePreview(); };
+  const pe=$('#previewEquip'); if(pe) pe.onclick=()=>{ equipItem(`${it.kind}:${it.val}`); closePreview(); };
+  const ps=$('#previewSound'); if(ps) ps.onclick=(e)=>{ e.stopPropagation(); playSkinSound(it.val); };
+  const cf=$('#customFile'); if(cf) cf.onchange=onCustomFile;
+  const ct=$('#customTest'); if(ct) ct.onclick=(e)=>{ e.stopPropagation(); playSkinSound('__custom'); };
+  const cg=$('#customToggle'); if(cg) cg.onclick=async()=>{ if(!customSoundURL) return; useCustomSound=!useCustomSound; await persistProgress(); toast(useCustomSound?'Custom sound on 🔊':'Back to skin sound'); openPreview('customsound'); };
+}
+function onCustomFile(e){
+  const f=e.target.files&&e.target.files[0]; if(!f) return;
+  if(!/^audio\//.test(f.type||'')){ toast('Pick an audio file'); return; }
+  if(f.size>1024*1024){ toast('Too big — keep it under 1 MB'); return; }
+  const r=new FileReader();
+  r.onload=async()=>{ customSoundURL=String(r.result||''); customAudioEl=null; useCustomSound=true;
+    await save('customSound',customSoundURL); await persistProgress();
+    toast('Clip saved & turned on 🔊'); openPreview('customsound'); };
+  r.onerror=()=>toast('Could not read that file');
+  r.readAsDataURL(f);
+}
+function closePreview(){ $('#previewModal').classList.remove('show'); }
+async function buyItem(id, priceOverride){
+  const it=findItem(id); if(!it) return;
+  const cost = (priceOverride!=null)?priceOverride:it.cost;
+  if(coins<cost) return;
+  coins-=cost;
+  if(it.kind==='consumable'){ if(id==='freeze')freezes++; else if(id==='snooze')snoozeTokens++; else easyPasses++; }
+  else if(it.kind==='perk') insurance=true;
+  else if(it.kind==='unlock'){ personality=true; }
+  else if(it.kind==='customsound'){ customUnlocked=true; }
+  else if(it.kind==='theme'){ if(!themesOwned.includes(it.val))themesOwned.push(it.val); applyTheme(it.val); }
+  else if(it.kind==='sun'){ if(!sunsOwned.includes(it.val))sunsOwned.push(it.val); applySun(it.val); }
+  await persistProgress(); refreshStats(); renderShop();
+  toast(`Bought ${it.name}!`);
+}
+function equipItem(tag){
+  const [kind,val]=tag.split(':');
+  if(kind==='theme') applyTheme(val);
+  if(kind==='sun') applySun(val);
+  persistProgress(); renderShop();
+  toast('Equipped');
+}
+let prestigeArmed=false;
+function doPrestige(){
+  if(streak<30) return;
+  if(!prestigeArmed){ prestigeArmed=true; const b=$('#prestigeBtn'); if(b)b.textContent='Sure?'; toast('Tap again to reset your streak'); setTimeout(()=>{prestigeArmed=false; renderShop();},3000); return; }
+  prestige++; coins+=200; streak=0; lastDone=null; prestigeArmed=false;
+  persistProgress(); refreshStats(); renderShop();
+  toast(`Prestige ${prestige}! +200 coins`);
+}
+
+/* ===================== wire up ===================== */
+async function init(){
+  const s=await load('settings', null); if(s) settings=Object.assign(settings,s);
+  // migration v3: backups are opt-in only — remove any that an earlier version auto-enabled
+  if(settings.migv!==4){
+    settings.enabled = settings.enabled.filter(id=>{
+      const ch=CHALLENGES.find(x=>x.id===id); return ch && ch.req!=='none';
+    });
+    if(!settings.enabled.includes('pushupsCam')) settings.enabled.push('pushupsCam');
+    if(settings.enabled.length===0) settings.enabled=['pushups','grass','bed','object'];
+    settings.migv=4; save('settings',settings);
+  }
+  streak = await load('streak', 0)||0;
+  coins  = await load('coins', 0)||0;
+  freezes= await load('freezes', 0)||0;
+  snoozeTokens = await load('snoozeTokens',0)||0;
+  easyPasses   = await load('easyPasses',0)||0;
+  insurance    = await load('insurance',false)||false;
+  themesOwned  = await load('themesOwned',['default'])||['default'];
+  sunsOwned    = await load('sunsOwned',['default'])||['default'];
+  equipTheme   = await load('equipTheme','default')||'default';
+  equipSun     = await load('equipSun','default')||'default';
+  personality  = await load('personality',false)||false;
+  userName     = await load('userName','')||'';
+  prestige     = await load('prestige',0)||0;
+  maxStreak    = await load('maxStreak',0)||0;
+  onboarded    = await load('onboarded',false)||false;
+  customUnlocked = await load('customUnlocked',false)||false;
+  useCustomSound = await load('useCustomSound',false)||false;
+  customSoundURL = await load('customSound','')||'';
+  wakeLog      = await load('wakeLog',[])||[];
+  workoutDate  = await load('workoutDate','')||'';
+  workoutEarned= await load('workoutEarned',0)||0;
+  doneDates  = await load('doneDates', [])||[];
+  frozenDates= await load('frozenDates', [])||[];
+  lastDone   = await load('lastDone', null);
+  if(lastDone && !/^\d{4}-\d{2}-\d{2}$/.test(lastDone)) lastDone=null;
+  // migrate cosmetics to the new skin-id system (old versions stored emoji glyphs)
+  sunsOwned = (sunsOwned||[]).filter(x=>SUNS[x]); if(!sunsOwned.includes('default')) sunsOwned.push('default');
+  if(!SUNS[equipSun]) equipSun='default';
+  if(!THEMES[equipTheme]) equipTheme='default';
+  applyTheme(equipTheme); applySun(equipSun);
+
+  // streak upkeep: if days were missed, spend freezes to bridge them, else reset
+  if(lastDone){
+    const gap=daysBetween(lastDone, dayKey()); // 0 = done today, 1 = done yesterday (fine)
+    const missed=gap-1;                          // full days with no completion
+    if(missed>0){
+      if(freezes>=missed){
+        for(let i=1;i<=missed;i++){ const d=new Date(); d.setDate(d.getDate()-i); frozenDates.push(dayKey(d)); }
+        freezes-=missed;
+        lastDone=dayKey(new Date(Date.now()-864e5)); // bridged: treat as if done yesterday
+      } else if(insurance && streak>=7 && coins >= (missed-freezes)*50){
+        // insurance: auto-buy the freezes needed to save a 7+ day streak
+        const need=missed-freezes; coins-=need*50; freezes=0;
+        for(let i=1;i<=missed;i++){ const d=new Date(); d.setDate(d.getDate()-i); frozenDates.push(dayKey(d)); }
+        lastDone=dayKey(new Date(Date.now()-864e5));
+      } else {
+        streak=0; // not enough freezes -> streak broken
+      }
+      await persistProgress();
+    }
+  }
+
+  $('#alarmTime').value=settings.time;
+  $('#v-reps').textContent=settings.reps;
+  $('#v-snoozes').textContent=settings.snoozes;
+  $('#mathLevel').value=settings.mathLevel||'algebra';
+  $('#mathLevel').onchange=e=>{ settings.mathLevel=e.target.value; save('settings',settings); };
+  renderChips(); bindSteppers(); refreshStats(); updateArmState();
+
+  $('#alarmTime').onchange=e=>{ settings.time=e.target.value||'07:00'; save('settings',settings); };
+  $('#shopBtn').onclick=()=>{ renderShop(); refreshStats(); show('shop'); };
+  $('#shopBack').onclick=()=>show('setup');
+  $('#previewClose').onclick=closePreview;
+  $('#previewModal').onclick=e=>{ if(e.target.id==='previewModal') closePreview(); };
+  setInterval(()=>{ const e=$('#dealReset'); if(e && $('#s-shop').classList.contains('active')) e.textContent=fmtReset(); }, 30000);
+
+  $('#armBtn').onclick=arm;
+  $('#testBtn').onclick=()=>{ settings.time=$('#alarmTime').value; ring(); };
+  $('#workoutBtn').onclick=startWorkout;
+  $('#disarmBtn').onclick=()=>{ clearInterval(runtime.ringTimer); show('setup'); };
+  $('#dismissBtn').onclick=startChallenge;
+  $('#easyBtn').onclick=useEasyPass;
+  $('#tokenBtn').onclick=useSnoozeToken;
+  $('#snoozeBtn').onclick=openMath;
+  $('#mathSubmit').onclick=submitMath;
+  $('#mathA').addEventListener('keydown',e=>{ if(e.key==='Enter') submitMath(); });
+  $('#mathCancel').onclick=()=>{ show('ringing'); startAlarm(); };
+  $('#doneBtn').onclick=()=>{ setDawn(0); show('setup'); };
+
+  // tapping the ringing orb just (re)starts audio if browser blocked it — does NOT dismiss
+  $('#s-ringing .orb').onclick=()=>{ if(!audioOn) startAlarm(); };
+
+  // onboarding submit
+  renderSunInto($('#onboardOrb'),'default');
+  $('#obStart').onclick=async()=>{
+    const nm=$('#obName').value.trim().slice(0,16); if(nm) userName=nm;
+    settings.time=$('#obTime').value||'07:00'; $('#alarmTime').value=settings.time;
+    onboarded=true;
+    await save('settings',settings); await save('userName',userName); await save('onboarded',true);
+    refreshStats(); show('setup');
+  };
+
+  // first screen: alarm via shortcut wins; else first-run onboarding; else home
+  const params=new URLSearchParams(location.search);
+  if(params.get('ring')==='1' || location.hash==='#ring'){ ring(); }
+  else if(!onboarded){ show('onboard'); }
+}
+init();
+</script>
+</body>
+</html>
