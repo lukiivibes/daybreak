@@ -168,13 +168,14 @@
   .pad.lit{opacity:1;transform:scale(.95);box-shadow:0 0 34px -4px currentColor}
 
   /* wake-time card */
-  .wakecard{position:relative;display:flex;align-items:center;justify-content:space-between;gap:12px;
-    background:rgba(255,244,230,.05);border:1px solid var(--line);border-radius:22px;padding:16px 20px;margin:24px 0 14px;cursor:pointer;transition:.15s}
-  .wakecard:active{transform:scale(.99);border-color:var(--coral)}
-  .wakelabel{font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--coral);font-weight:600;margin-bottom:5px}
-  .waketime{font-family:var(--display);font-weight:800;font-size:clamp(34px,11vw,48px);letter-spacing:-.02em;line-height:1;font-variant-numeric:tabular-nums}
-  .wakeedit{font-size:12.5px;color:var(--dim);font-weight:600;white-space:nowrap}
-  .wakecard input[type=time]{position:absolute;inset:0;width:100%;height:100%;opacity:0;border:none;pointer-events:none}
+  .wakecard{position:relative;display:flex;flex-direction:column;gap:8px;
+    background:rgba(255,244,230,.05);border:1px solid var(--line);border-radius:22px;padding:16px 20px;margin:24px 0 14px}
+  .wakecard:focus-within{border-color:var(--coral)}
+  .wakelabel{font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--coral);font-weight:600}
+  .timefield{font-family:var(--display);font-weight:800;font-size:clamp(34px,11vw,46px);letter-spacing:-.02em;line-height:1.05;
+    color:var(--cream);background:transparent;border:none;outline:none;padding:0;width:100%;font-variant-numeric:tabular-nums;-webkit-appearance:none;appearance:none}
+  .timefield::-webkit-date-and-time-value{text-align:left}
+  .timefield::-webkit-calendar-picker-indicator{opacity:0;width:0;display:none}
 
   /* stats + calendar */
   .statcard{padding:18px}
@@ -204,6 +205,110 @@
   .repbadge{position:absolute;top:10px;left:10px;background:rgba(14,11,34,.72);padding:6px 12px;border-radius:12px;
     font-family:var(--display);font-weight:800;font-size:26px;color:var(--cream);display:flex;align-items:baseline;gap:4px;z-index:3}
   .repbadge small{font-size:13px;color:var(--dim);font-weight:600}
+  /* skeleton shimmer */
+  .skel{position:absolute;inset:0;z-index:2;border-radius:inherit;
+    background:linear-gradient(100deg, rgba(255,244,230,.05) 30%, rgba(255,244,230,.16) 50%, rgba(255,244,230,.05) 70%);
+    background-size:200% 100%;animation:shimmer 1.2s linear infinite;display:flex;align-items:center;justify-content:center;
+    font-size:13px;color:var(--cream);font-weight:600}
+  @keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+  /* preview modal */
+  .modal{position:fixed;inset:0;z-index:60;background:rgba(8,6,20,.78);display:none;align-items:center;justify-content:center;padding:24px}
+  .modal.show{display:flex;animation:fade .25s ease}
+  .modalcard{background:#161033;border:1px solid var(--line);border-radius:24px;padding:24px;max-width:360px;width:100%;text-align:center;position:relative}
+  .modalcard h3{font-family:var(--display);font-weight:800;font-size:22px;margin-bottom:4px}
+  .modalcard p{color:var(--dim);font-size:13.5px;line-height:1.5}
+  .modalclose{position:absolute;top:12px;right:16px;background:none;border:none;color:var(--dim);font-size:26px;cursor:pointer;line-height:1}
+  .previewSky{height:150px;border-radius:18px;margin:14px 0;display:flex;align-items:center;justify-content:center;overflow:hidden}
+  .previewOrb{width:80px;height:80px;border-radius:50%;box-shadow:0 0 40px -6px rgba(0,0,0,.5)}
+  .previewGlyph{font-size:66px}
+  /* in-context phone mockup */
+  .phoneMock{width:172px;height:312px;border-radius:30px;margin:16px auto;position:relative;overflow:hidden;border:4px solid #000;
+    background:radial-gradient(120% 80% at 50% 120%, var(--mg) 0%, var(--mc) 16%, transparent 48%), linear-gradient(180deg, var(--mn), var(--mi));
+    padding:18px 15px;text-align:left;box-shadow:0 12px 34px rgba(0,0,0,.55)}
+  .pmTop{font-family:var(--display);font-weight:800;font-size:9px;color:#FFF4E6;opacity:.92;display:flex;gap:4px;align-items:center}
+  .pmTop::before{content:'';width:6px;height:6px;border-radius:50%;background:linear-gradient(var(--mg),var(--mc))}
+  .pmEye{font-size:6.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--mc);font-weight:800;margin-top:26px}
+  .pmTitle{font-family:var(--display);font-weight:800;font-size:21px;color:#FFF4E6;line-height:.95;margin-top:6px;letter-spacing:-.02em}
+  .pmOrb{width:78px;height:78px;border-radius:50%;margin:20px auto 0;display:flex;align-items:center;justify-content:center;font-size:48px}
+  .pmTime{font-family:var(--display);font-weight:800;font-size:17px;color:#FFF4E6;text-align:center;margin-top:12px;opacity:.95}
+
+  /* ===== rendered sun skins (scenes) ===== */
+  .sunOrb{position:relative;background:none!important;box-shadow:none!important;overflow:visible}
+  .ringing .sunOrb{animation:none}
+  .sunOrb>div{position:absolute;border-radius:50%;pointer-events:none}
+  .sunOrb .s-aura{inset:-6%;background:radial-gradient(circle, var(--glow) 0%, transparent 62%);opacity:.5;animation:sunpulse 2.8s ease-in-out infinite}
+  .sunOrb .s-scene{inset:7%;overflow:hidden;box-shadow:0 0 55px -4px var(--glow), inset 0 0 26px rgba(0,0,0,.45)}
+  .sunOrb .s-scene>*{position:absolute}
+  .sunOrb .s-scene .sky{inset:0;border-radius:0}
+  .sunOrb .s-rays{inset:-14%;opacity:0;mix-blend-mode:screen;
+    background:conic-gradient(from 0deg, transparent 0 7deg, var(--glow) 8deg 11deg, transparent 12deg 37deg, var(--glow) 38deg 41deg, transparent 42deg 67deg, var(--glow) 68deg 71deg, transparent 72deg 97deg, var(--glow) 98deg 101deg, transparent 102deg);
+    -webkit-mask:radial-gradient(circle, transparent 47%, #000 50%); mask:radial-gradient(circle, transparent 47%, #000 50%)}
+  .sunOrb .s-ring{inset:-15%;border:2px solid var(--glow);border-top-color:transparent;border-bottom-color:transparent;opacity:0}
+  @keyframes sunpulse{0%,100%{transform:scale(1);opacity:.45}50%{transform:scale(1.07);opacity:.8}}
+  @keyframes sunspin{to{transform:rotate(360deg)}}
+  .sunOrb.rar-epic .s-rays{opacity:.4;animation:sunspin 18s linear infinite}
+  .sunOrb.rar-mythic .s-rays{opacity:.6;animation:sunspin 12s linear infinite}
+  .sunOrb.rar-legendary .s-rays{opacity:.85;animation:sunspin 8s linear infinite}
+  .sunOrb.rar-legendary .s-ring{opacity:.85;animation:sunspin 5s linear infinite}
+
+  /* scene elements */
+  .s-scene .star{position:absolute;background:#fff;border-radius:50%;animation:twinkle 2s ease-in-out infinite}
+  @keyframes twinkle{0%,100%{opacity:.3}50%{opacity:1}}
+  .s-scene .cmoon{width:34%;height:34%;left:18%;top:16%;border-radius:50%;background:radial-gradient(circle at 38% 35%,#fff,#c4cde8 70%);box-shadow:inset -6px -4px 0 rgba(120,130,170,.35),0 0 18px #cdd6ff}
+  .s-scene .cmoon.sm{width:22%;height:22%;left:60%;top:14%}
+  .s-scene .csun{width:42%;height:42%;left:29%;top:26%;border-radius:50%;background:radial-gradient(circle at 50% 42%,#fff7d6,#ffb347 60%,#ff7a1a);box-shadow:0 0 26px #ffae42}
+  .s-scene .csun.lowsun{top:30%}
+  .s-scene .csun.bigsun{width:60%;height:60%;left:20%;top:20%;background:radial-gradient(circle at 50% 45%,#fff6d0,#ff9a1a 55%,#ff5500);box-shadow:0 0 30px #ff8a1a;animation:sunpulse 2.4s ease-in-out infinite}
+  .s-scene .cloud{height:9%;border-radius:999px;background:rgba(255,255,255,.85);filter:blur(.5px)}
+  .s-scene .cloud.c1{width:46%;left:8%;top:58%;animation:drift 9s linear infinite}
+  .s-scene .cloud.c2{width:34%;left:52%;top:70%;animation:drift 13s linear infinite reverse}
+  @keyframes drift{0%{transform:translateX(-12%)}50%{transform:translateX(12%)}100%{transform:translateX(-12%)}}
+  .s-scene svg.city,.s-scene svg.mount{left:0;bottom:0;width:100%;height:48%;border-radius:0}
+  .s-scene svg.mount{height:40%}
+  .s-scene .wave{left:-10%;width:120%;height:16%;border-radius:50%;background:rgba(255,255,255,.18);box-shadow:0 0 12px rgba(255,255,255,.25)}
+  .s-scene .wave.w1{bottom:6%;animation:wavemove 3.5s ease-in-out infinite}
+  .s-scene .wave.w2{bottom:18%;opacity:.7;animation:wavemove 4.5s ease-in-out infinite reverse}
+  .s-scene .wave.w3{bottom:30%;opacity:.45;animation:wavemove 5.5s ease-in-out infinite}
+  @keyframes wavemove{0%,100%{transform:translateX(-8%)}50%{transform:translateX(8%)}}
+  .s-scene .flame{left:18%;bottom:-14%;width:64%;height:80%;border-radius:50% 50% 46% 46%;
+    background:radial-gradient(circle at 50% 75%, #fff3b0, #ff9a1a 40%, #ff3b1a 70%, transparent 78%);
+    filter:blur(2px);animation:flick .28s ease-in-out infinite alternate;transform-origin:50% 100%}
+  .s-scene .flame.big{width:78%;left:11%;height:96%}
+  .s-scene .flame.f2{left:34%;width:46%;animation-duration:.22s;opacity:.85}
+  @keyframes flick{0%{transform:scaleY(1) scaleX(1) translateX(0)}100%{transform:scaleY(1.08) scaleX(.94) translateX(2%)}}
+  .s-scene .ember{width:4px;height:4px;border-radius:50%;background:#ffb347;box-shadow:0 0 6px #ff8a1a;bottom:-6%}
+  .s-scene .ember.e1{left:24%;animation:rise 2.1s linear infinite}
+  .s-scene .ember.e2{left:46%;animation:rise 2.7s linear infinite .4s}
+  .s-scene .ember.e3{left:62%;animation:rise 2.3s linear infinite .9s}
+  .s-scene .ember.e4{left:36%;animation:rise 3.1s linear infinite 1.3s}
+  .s-scene .ember.e5{left:70%;animation:rise 2.5s linear infinite .6s}
+  @keyframes rise{0%{transform:translateY(0) scale(1);opacity:0}15%{opacity:1}100%{transform:translateY(-260%) scale(.4);opacity:0}}
+  .s-scene .spiral{inset:6%;border-radius:50%;background:conic-gradient(from 0deg,transparent,#b388ff44 20%,transparent 40%,#5e7bff44 60%,transparent 80%,transparent);animation:sunspin 16s linear infinite}
+  .s-scene .aband{left:-10%;width:120%;height:42%;top:14%;filter:blur(5px);opacity:.7;border-radius:50%}
+  .s-scene .aband.a1{background:linear-gradient(90deg,transparent,#54e0a8,transparent);animation:awave 5s ease-in-out infinite}
+  .s-scene .aband.a2{top:30%;background:linear-gradient(90deg,transparent,#7a5bff,transparent);animation:awave 7s ease-in-out infinite reverse}
+  @keyframes awave{0%,100%{transform:translateX(-10%) skewX(-8deg)}50%{transform:translateX(10%) skewX(8deg)}}
+  .s-scene .flare{inset:8%;border-radius:50%;mix-blend-mode:screen;background:conic-gradient(from 0deg,transparent 0 18deg,#ffd98a88 20deg 24deg,transparent 26deg 60deg)}
+  .s-scene .flare.f1{animation:sunspin 9s linear infinite}
+  .s-scene .flare.f2{animation:sunspin 14s linear infinite reverse;opacity:.7}
+  .s-scene .sky.neb{inset:0;background:conic-gradient(from 0deg,#ff5bc0,#8a5bff,#5e7bff,#ff5bc0);filter:blur(4px);animation:sunspin 16s linear infinite}
+  .s-scene .sky.prism{inset:0;background:conic-gradient(from 0deg,#ff5b5b,#ffc24b,#54e0a8,#4d8bff,#b15bff,#ff5b5b);animation:sunspin 7s linear infinite}
+  .s-scene .prismShine{inset:0;background:radial-gradient(circle at 35% 30%,rgba(255,255,255,.7),transparent 40%);mix-blend-mode:screen;animation:twinkle 1.4s ease-in-out infinite}
+  .s-scene .cometObj{width:8px;height:8px;border-radius:50%;background:#eaf4ff;box-shadow:0 0 10px #bfe0ff,-22px 14px 24px 2px rgba(190,224,255,.5);left:14%;top:18%;animation:streak 3.2s ease-in infinite}
+  @keyframes streak{0%{transform:translate(-30%,-30%);opacity:0}20%{opacity:1}80%{opacity:1}100%{transform:translate(420%,300%);opacity:0}}
+  /* rarity tag pill */
+  .rar{display:inline-block;font-size:9px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;border:1px solid;border-radius:999px;padding:1px 6px;vertical-align:middle}
+  .shopitem.rb-legendary{border-color:rgba(255,194,75,.45)}
+  .shopitem.rb-mythic{border-color:rgba(255,91,192,.35)}
+  .shopitem.rb-epic{border-color:rgba(177,91,255,.3)}
+  .modalbtn{font-family:var(--display);font-weight:800;font-size:16px;border:none;border-radius:14px;padding:13px;width:100%;margin-top:8px;cursor:pointer;color:#190a05;background:linear-gradient(135deg,var(--gold),var(--coral))}
+  .acts{display:flex;flex-direction:column;gap:6px;align-items:flex-end;flex:none}
+  .prevbtn{background:rgba(255,244,230,.08);border:1px solid var(--line);color:var(--cream);border-radius:10px;padding:7px 11px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap}
+  .prevbtn:active{transform:scale(.95)}
+  .deal{font-size:11px;color:var(--mint);font-weight:800;background:rgba(84,224,168,.15);padding:1px 7px;border-radius:999px}
+  .raretag{font-size:10px;color:var(--gold);font-weight:800;letter-spacing:.04em}
+  .shopitem.rare{border-color:var(--gold);box-shadow:0 0 20px -6px var(--gold)}
+  .wasprice{font-size:11px;color:var(--dim);text-decoration:line-through;margin-right:4px}
 
   /* shop items */
   .shopitem{display:flex;align-items:center;gap:14px;background:rgba(255,244,230,.04);border:1px solid var(--line);border-radius:18px;padding:16px;margin-bottom:12px}
@@ -243,12 +348,8 @@
     </div>
 
     <div class="wakecard" id="wakeCard">
-      <div>
-        <div class="wakelabel">Wake me at</div>
-        <div class="waketime" id="waketimeText">7:00 AM</div>
-      </div>
-      <div class="wakeedit">tap to change ✎</div>
-      <input type="time" id="alarmTime" value="07:00" />
+      <div class="wakelabel">Wake me at</div>
+      <input type="time" id="alarmTime" class="timefield" value="07:00" />
     </div>
 
     <div class="card statcard">
@@ -337,7 +438,8 @@
     <div class="orbwrap">
       <div class="ringlabel">wake up</div>
       <div class="bigtime" id="ringTime">07:00</div>
-      <div class="orb"><div><div class="num" id="ringSun">☀</div><div class="lab">tap to silence... if you can</div></div></div>
+      <div class="orb sunOrb" id="ringSunOrb"></div>
+      <div class="lab ringlab" id="ringLab">tap to silence... if you can</div>
       <div class="stack">
         <button class="btn" id="dismissBtn">I'm up — give me my challenge</button>
         <button class="btn ghost" id="easyBtn" hidden>🎚️ Use Easy Pass (<span id="easyLeft">0</span>)</button>
@@ -398,6 +500,13 @@
 
 <div class="toast" id="toast"></div>
 
+<div class="modal" id="previewModal">
+  <div class="modalcard">
+    <button class="modalclose" id="previewClose">×</button>
+    <div id="previewBody"></div>
+  </div>
+</div>
+
 <script>
 /* ===================== state + storage ===================== */
 const CHALLENGES = [
@@ -430,7 +539,7 @@ let settings = {time:'07:00', enabled:['pushups','pushupsCam','grass','bed','obj
 let streak = 0, coins = 0, freezes = 0;
 let snoozeTokens = 0, easyPasses = 0, insurance = false;
 let themesOwned = ['default'], sunsOwned = ['default'];
-let equipTheme = 'default', equipSun = '☀️';
+let equipTheme = 'default', equipSun = 'default';
 let personality = false, userName = '';
 let prestige = 0, maxStreak = 0;
 let doneDates = [];   // 'YYYY-MM-DD' days the alarm was beaten
@@ -482,18 +591,20 @@ function startAlarm(){
   try{
     ac = ac || new (window.AudioContext||window.webkitAudioContext)();
     if(ac.state==='suspended') ac.resume();
+    const snd=(SUNS[equipSun]&&SUNS[equipSun].sound)||{type:'sawtooth',freqs:[660,880]};
     osc = ac.createOscillator(); gain = ac.createGain();
-    osc.type='sawtooth'; osc.connect(gain); gain.connect(ac.destination);
+    osc.type=snd.type||'sawtooth'; osc.connect(gain); gain.connect(ac.destination);
     gain.gain.value=0;
     osc.start();
-    let on=false;
+    let i=0;
     audioOn=true;
     (function beep(){
       if(!audioOn) return;
-      on=!on;
-      osc.frequency.setValueAtTime(on?880:660, ac.currentTime);
-      gain.gain.setTargetAtTime(on?0.18:0.0, ac.currentTime, .01);
-      setTimeout(beep, on?420:230);
+      const f=snd.freqs[i%snd.freqs.length]; i++;
+      osc.frequency.setValueAtTime(f, ac.currentTime);
+      gain.gain.setTargetAtTime(0.18, ac.currentTime, .008);
+      setTimeout(()=>{ if(audioOn&&gain) gain.gain.setTargetAtTime(0.0001, ac.currentTime, .03); }, 170);
+      setTimeout(beep, 360);
     })();
   }catch(e){}
 }
@@ -742,6 +853,7 @@ async function poseChallenge(c){
     <div class="ringlabel">${c.label} · camera</div>
     <div class="prompt" style="font-size:clamp(20px,5.5vw,26px)">${c.prompt(target)}</div>
     <div class="posewrap"><video id="cam" autoplay playsinline muted></video><canvas id="poseCv"></canvas>
+      <div class="skel" id="poseSkel">warming up the camera…</div>
       <div class="repbadge"><span id="repNum">0</span><small>/ ${target}</small></div></div>
     <div class="pbar"><i id="repBar"></i></div>
     <div class="promptsub" id="poseHint">${c.sub}</div>
@@ -777,6 +889,7 @@ async function poseChallenge(c){
   }catch(e){ return bailToTap('Pose detector failed to start — tap your way out instead'); }
 
   $('#poseHint').textContent="Get into a push-up position — I'm watching.";
+  const sk=$('#poseSkel'); if(sk) sk.remove();
   const v=$('#cam'), cv=$('#poseCv'), ctx=cv.getContext('2d');
   let count=0, st='up', lastRep=0, running=true, lastInfer=0;
   runtime._pose={ stop:()=>{ running=false; try{detector.dispose&&detector.dispose();}catch(e){} } };
@@ -1025,7 +1138,29 @@ const THEMES={
   aurora :{gold:'#5BE0A6',coral:'#22B8C0',night:'#06211c',night2:'#0b2e26',indigo:'#0f3d33'},
   vapor  :{gold:'#FF8AD8',coral:'#8A5BFF',night:'#160a2e',night2:'#241046',indigo:'#3a1a6b'},
   ember  :{gold:'#FFB24B',coral:'#E0352B',night:'#1a0606',night2:'#2a0a08',indigo:'#3d100c'},
-  mono   :{gold:'#f2f2f2',coral:'#9aa0a6',night:'#0a0a0c',night2:'#141417',indigo:'#1f1f24'}
+  mono   :{gold:'#f2f2f2',coral:'#9aa0a6',night:'#0a0a0c',night2:'#141417',indigo:'#1f1f24'},
+  galaxy :{gold:'#b388ff',coral:'#5e7bff',night:'#05030f',night2:'#0c0820',indigo:'#1a1040'}
+};
+const RARITY={
+  common:{name:'Common',color:'#9aa0a6'}, rare:{name:'Rare',color:'#4d8bff'},
+  epic:{name:'Epic',color:'#b15bff'}, mythic:{name:'Mythic',color:'#ff5bc0'}, legendary:{name:'Legendary',color:'#ffc24b'}
+};
+function rarityTag(r){ const x=RARITY[r]; return x?`<span class="rar" style="color:${x.color};border-color:${x.color}">${x.name}</span>`:''; }
+
+/* Sun skins: rendered animated orbs (not emoji). Rarity drives the flair + sound richness. */
+const SUNS={
+  default:{name:'Classic Sun', icon:'☀️', rarity:'common', cost:0,   c1:'#FFD27A',c2:'#FF6B4A',glow:'#FF8A4A', sound:{type:'sawtooth',freqs:[660,880]},            desc:'The original sunrise orb.'},
+  moon:   {name:'Moonlight',   icon:'🌙', rarity:'common', cost:90,  c1:'#eef3ff',c2:'#8aa0d8',glow:'#9ab0ff', sound:{type:'sine',freqs:[440,587]},               desc:'A cool silver glow.'},
+  ocean:  {name:'Tide',        icon:'🌊', rarity:'rare',   cost:160, c1:'#9fefff',c2:'#1f6bd0',glow:'#3aa0ff', sound:{type:'sine',freqs:[392,523,659]},           desc:'Ocean blues with a soft shimmer.'},
+  ember:  {name:'Ember',       icon:'🔥', rarity:'rare',   cost:160, c1:'#ffd08a',c2:'#d0331f',glow:'#ff6a3a', sound:{type:'triangle',freqs:[523,392,440]},        desc:'A smouldering flicker.'},
+  galaxy: {name:'Galaxy',      icon:'🌌', rarity:'epic',   cost:260, c1:'#c8a8ff',c2:'#3a1a8a',glow:'#8a5bff', sound:{type:'sine',freqs:[330,494,659]},           desc:'A deep-space starfield with a drifting spiral.'},
+  city:   {name:'City Night',  icon:'🌃', rarity:'epic',   cost:280, c1:'#ffd27a',c2:'#5e3a8a',glow:'#ff8a5a', sound:{type:'triangle',freqs:[392,523,587]},        desc:'A glowing city skyline under a starry dusk.'},
+  aurora: {name:'Aurora',      icon:'🌈', rarity:'epic',   cost:260, c1:'#7dffc0',c2:'#3a8ac0',glow:'#54e0a8', sound:{type:'triangle',freqs:[440,554,659]},        desc:'Shifting northern-lights hues + rays.'},
+  solar:  {name:'Solar Flare', icon:'🌞', rarity:'mythic', cost:430, c1:'#fff3c2',c2:'#ff4500',glow:'#ff8a1a', sound:{type:'sawtooth',freqs:[523,659,784]},        desc:'A blazing core, rotating flares and sparks.'},
+  nebula: {name:'Nebula',      icon:'🌫️', rarity:'mythic', cost:430, c1:'#ff5bc0',c2:'#5e7bff',glow:'#b15bff', sound:{type:'square',freqs:[392,523,659,784]},      desc:'A swirling cloud of colour with sparks.'},
+  phoenix:{name:'Phoenix',     icon:'🦅', rarity:'legendary',cost:700,c1:'#fff1c2',c2:'#c0143a',glow:'#ff7a1a', sound:{type:'sawtooth',freqs:[440,554,659,880]},    desc:'Reborn in fire — rays, sparks, an orbiting ring.'},
+  prism:  {name:'Prism',       icon:'💎', rarity:'legendary',cost:700,c1:'#ffffff',c2:'#b15bff',glow:'#54e0a8', sound:{type:'triangle',freqs:[523,659,784,1047]},   desc:'A rotating rainbow with full sparkle.'},
+  comet:  {name:'Comet',       icon:'☄️', rarity:'mythic', cost:380, daily:true, c1:'#bfe0ff',c2:'#3a5bd0',glow:'#7aa0ff', sound:{type:'sine',freqs:[494,659,988]}, desc:'Rare streaking comet. Daily Deals only.'}
 };
 const BADGES=[{at:1,icon:'🌱',name:'Sprout'},{at:7,icon:'🔥',name:'On Fire'},{at:30,icon:'⭐',name:'Star Riser'},{at:100,icon:'👑',name:'Legend'}];
 
@@ -1037,24 +1172,77 @@ const CATALOG={
     {id:'insurance',icon:'🛡️', name:'Streak Insurance', cost:300, kind:'perk',       desc:'If a 7+ day streak is about to break with no freeze, auto-buys one with your coins.'},
   ],
   looks:[
-    {id:'theme:aurora', icon:'🌌', name:'Aurora Sky',   cost:120, kind:'theme', val:'aurora', desc:'Teal & green northern-lights dawn.'},
-    {id:'theme:vapor',  icon:'🌆', name:'Vaporwave Sky',cost:120, kind:'theme', val:'vapor',  desc:'Pink & purple synthwave dawn.'},
-    {id:'theme:ember',  icon:'🌋', name:'Ember Sky',    cost:120, kind:'theme', val:'ember',  desc:'Deep red volcanic dawn.'},
-    {id:'theme:mono',   icon:'🌑', name:'Mono Sky',     cost:120, kind:'theme', val:'mono',   desc:'Clean black & white.'},
-    {id:'sun:moon',     icon:'🌙', name:'Moon Skin',    cost:80,  kind:'sun', val:'🌙', desc:'Wake to the moon.'},
-    {id:'sun:planet',   icon:'🪐', name:'Planet Skin',  cost:80,  kind:'sun', val:'🪐', desc:'A ringed planet orb.'},
-    {id:'sun:star',     icon:'🌟', name:'Star Skin',    cost:80,  kind:'sun', val:'🌟', desc:'A shining star.'},
-    {id:'sun:cool',     icon:'😎', name:'Cool Skin',    cost:80,  kind:'sun', val:'😎', desc:'Too cool to oversleep.'},
-    {id:'personality',  icon:'🔤', name:'Personality Pack', cost:150, kind:'unlock', desc:'Spicier wake-up phrases + let Daybreak call you by name.'},
+    {id:'theme:ember',  icon:'🌋', name:'Ember Sky',    cost:120, kind:'theme', val:'ember',  rarity:'rare', desc:'Deep red volcanic dawn.'},
+    {id:'theme:mono',   icon:'🌑', name:'Mono Sky',     cost:120, kind:'theme', val:'mono',   rarity:'rare', desc:'Clean black & white.'},
+    {id:'theme:aurora', icon:'🌌', name:'Aurora Sky',   cost:180, kind:'theme', val:'aurora', rarity:'epic', desc:'Teal & green northern-lights dawn.'},
+    {id:'theme:vapor',  icon:'🌆', name:'Vaporwave Sky',cost:180, kind:'theme', val:'vapor',  rarity:'epic', desc:'Pink & purple synthwave dawn.'},
+    {id:'theme:galaxy', icon:'🌠', name:'Galaxy Sky',   cost:320, kind:'theme', val:'galaxy', rarity:'legendary', daily:true, desc:'Rare deep-space sky. Daily Deals only.'},
+    {id:'personality',  icon:'🔤', name:'Personality Pack', cost:150, kind:'unlock', rarity:'rare', desc:'Spicier wake-up phrases + let Daybreak call you by name.'},
   ]
 };
+// build sun-skin shop entries from SUNS (skip the default)
+Object.keys(SUNS).filter(k=>k!=='default').forEach(k=>{ const s=SUNS[k];
+  CATALOG.looks.push({id:'sun:'+k, icon:s.icon, name:s.name, cost:s.cost, kind:'sun', val:k, rarity:s.rarity, daily:!!s.daily, desc:s.desc});
+});
 
 function coinMult(){ const base = maxStreakTier(streak); return Math.round((base + prestige*0.1)*10)/10; }
 function maxStreakTier(s){ return s>=100?3 : s>=30?2 : s>=7?1.5 : 1; }
 function applyTheme(name){ const t=THEMES[name]||THEMES.default; const r=document.documentElement.style;
   r.setProperty('--gold',t.gold); r.setProperty('--coral',t.coral); r.setProperty('--night',t.night);
   r.setProperty('--night2',t.night2); r.setProperty('--indigo',t.indigo); equipTheme=name; }
-function applySun(glyph){ equipSun=glyph||'☀️'; const o=$('#ringSun'); if(o) o.textContent=equipSun; }
+function renderSunInto(el, skinId){ if(!el) return; const sk=SUNS[skinId]||SUNS.default;
+  el.className = el.className.replace(/\b(rar-\w+|skin-[\w]+|sunOrb)\b/g,'').replace(/\s+/g,' ').trim()+` sunOrb rar-${sk.rarity} skin-${skinId}`;
+  el.style.setProperty('--c1',sk.c1); el.style.setProperty('--c2',sk.c2); el.style.setProperty('--glow',sk.glow);
+  el.innerHTML=`<div class="s-aura"></div><div class="s-scene">${sceneHTML(skinId)}</div><div class="s-rays"></div><div class="s-ring"></div>`;
+}
+function sunMockMarkup(skinId){ const sk=SUNS[skinId]||SUNS.default;
+  return `<div class="pmOrb sunOrb rar-${sk.rarity} skin-${skinId}" style="--c1:${sk.c1};--c2:${sk.c2};--glow:${sk.glow}">
+    <div class="s-aura"></div><div class="s-scene">${sceneHTML(skinId)}</div><div class="s-rays"></div><div class="s-ring"></div></div>`;
+}
+/* scene builders — little dioramas clipped inside the orb */
+function starsHTML(n){ let s=''; let seed=n*7+13;
+  const r=()=>{ seed=(seed*9301+49297)%233280; return seed/233280; };
+  for(let i=0;i<n;i++){ const x=(r()*100).toFixed(1), y=(r()*70).toFixed(1), d=(r()*2+0.6).toFixed(1), dl=(r()*2).toFixed(2);
+    s+=`<i class="star" style="left:${x}%;top:${y}%;width:${d}px;height:${d}px;animation-delay:${dl}s"></i>`; }
+  return s;
+}
+function citySVG(){
+  return `<svg class="city" viewBox="0 0 100 40" preserveAspectRatio="none">
+    <path fill="#0a0618" d="M0,40 L0,24 L6,24 L6,18 L12,18 L12,26 L18,26 L18,14 L22,14 L22,9 L26,9 L26,14 L30,14 L30,22 L38,22 L38,16 L44,16 L44,11 L48,11 L48,16 L54,16 L54,25 L62,25 L62,13 L68,13 L68,20 L76,20 L76,15 L82,15 L82,23 L90,23 L90,18 L96,18 L96,26 L100,26 L100,40 Z"/>
+    <g fill="#ffd98a" opacity=".85"><rect x="20" y="12" width="1.4" height="1.4"/><rect x="24" y="16" width="1.4" height="1.4"/><rect x="40" y="14" width="1.4" height="1.4"/><rect x="45" y="18" width="1.4" height="1.4"/><rect x="64" y="16" width="1.4" height="1.4"/><rect x="78" y="18" width="1.4" height="1.4"/><rect x="9" y="20" width="1.4" height="1.4"/><rect x="33" y="18" width="1.4" height="1.4"/></g></svg>`;
+}
+function mountSVG(){ return `<svg class="mount" viewBox="0 0 100 40" preserveAspectRatio="none"><path fill="#04141a" d="M0,40 L0,30 L20,16 L34,28 L50,12 L66,26 L82,15 L100,30 L100,40 Z"/></svg>`; }
+function sceneHTML(id){
+  switch(id){
+    case 'moon': return `<div class="sky" style="background:linear-gradient(180deg,#0a1230,#23306a)"></div>${starsHTML(16)}<div class="cmoon"></div>`;
+    case 'city': return `<div class="sky" style="background:linear-gradient(180deg,#1a1240,#5e3a8a 62%,#ff8a5a)"></div>${starsHTML(12)}<div class="cmoon sm"></div>${citySVG()}`;
+    case 'ocean': return `<div class="sky" style="background:linear-gradient(180deg,#bfe9ff,#3aa0ff 58%)"></div><div class="csun lowsun"></div><div class="wave w1"></div><div class="wave w2"></div><div class="wave w3"></div>`;
+    case 'ember': return `<div class="sky" style="background:linear-gradient(180deg,#2a0a08,#7a1a10 78%)"></div><div class="ember e1"></div><div class="ember e2"></div><div class="ember e3"></div><div class="ember e4"></div><div class="flame"></div>`;
+    case 'galaxy': return `<div class="sky" style="background:radial-gradient(circle at 50% 60%,#3a1a8a55,#0a0420 78%)"></div>${starsHTML(34)}<div class="spiral"></div>`;
+    case 'aurora': return `<div class="sky" style="background:linear-gradient(180deg,#04111a,#0a2630)"></div>${starsHTML(18)}<div class="aband a1"></div><div class="aband a2"></div>${mountSVG()}`;
+    case 'solar': return `<div class="sky" style="background:radial-gradient(circle at 50% 50%,#ff9a1a,#6a1200 80%)"></div><div class="csun bigsun"></div><div class="flare f1"></div><div class="flare f2"></div>`;
+    case 'nebula': return `<div class="sky neb"></div>${starsHTML(20)}`;
+    case 'phoenix': return `<div class="sky" style="background:linear-gradient(180deg,#2a0606,#c0143a 72%,#ff7a1a)"></div><div class="ember e1"></div><div class="ember e2"></div><div class="ember e3"></div><div class="ember e4"></div><div class="ember e5"></div><div class="flame big"></div><div class="flame big f2"></div>`;
+    case 'prism': return `<div class="sky prism"></div><div class="prismShine"></div>`;
+    case 'comet': return `<div class="sky" style="background:linear-gradient(180deg,#060a20,#101a4a)"></div>${starsHTML(20)}<div class="cometObj"></div>`;
+    default: return `<div class="sky" style="background:linear-gradient(180deg,#7ec8ff,#ffd27a 66%,#ff8a4a)"></div><div class="csun"></div><div class="cloud c1"></div><div class="cloud c2"></div>`;
+  }
+}
+/* play a short preview of a skin's alarm sound (separate from the live alarm) */
+function playSkinSound(skinId){
+  try{
+    ac = ac || new (window.AudioContext||window.webkitAudioContext)();
+    if(ac.state==='suspended') ac.resume();
+    const snd=(SUNS[skinId]&&SUNS[skinId].sound)||{type:'sawtooth',freqs:[660,880]};
+    const o=ac.createOscillator(), g=ac.createGain();
+    o.type=snd.type||'sine'; o.connect(g); g.connect(ac.destination); g.gain.value=0; o.start();
+    const t0=ac.currentTime, step=0.19, N=Math.max(5, snd.freqs.length*2);
+    for(let k=0;k<N;k++){ const f=snd.freqs[k%snd.freqs.length], t=t0+k*step;
+      o.frequency.setValueAtTime(f,t); g.gain.setTargetAtTime(0.2,t,.008); g.gain.setTargetAtTime(0.0001,t+step*0.7,.03); }
+    o.stop(t0+N*step+0.1);
+  }catch(e){}
+}
+function applySun(skinId){ if(!SUNS[skinId]) skinId='default'; equipSun=skinId; renderSunInto($('#ringSunOrb'), skinId); }
 
 async function persistProgress(){
   await save('streak',streak); await save('coins',coins); await save('freezes',freezes);
@@ -1122,6 +1310,44 @@ function refreshStats(){
   renderCal(); renderBadges();
 }
 
+/* ---------- daily deals (rotates each day, deterministic per date) ---------- */
+function hashStr(s){ let h=2166136261; for(let i=0;i<s.length;i++){ h^=s.charCodeAt(i); h=Math.imul(h,16777619);} return h>>>0; }
+function mulberry32(a){ return function(){ a|=0;a=a+0x6D2B79F5|0; let t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+function dailyDeals(){
+  const rng=mulberry32(hashStr('daybreak-deals-'+dayKey()));
+  const normal=[...CATALOG.power,...CATALOG.looks].filter(i=>!i.daily);
+  const rares=[...CATALOG.power,...CATALOG.looks].filter(i=>i.daily);
+  const deals=[], used=new Set();
+  function pick(arr){ if(!arr.length) return null; let it; let tries=0; do{ it=arr[Math.floor(rng()*arr.length)]; tries++; }while(used.has(it.id)&&tries<20); if(used.has(it.id))return null; used.add(it.id); return it; }
+  for(let slot=0; slot<3; slot++){
+    let it;
+    // 3rd slot has a ~28% chance to roll a rare exclusive
+    if(slot===2 && rng()<0.28 && rares.length) it=pick(rares);
+    if(!it) it=pick(normal);
+    if(!it) continue;
+    const r=rng();
+    let pct = r<0.12?60 : r<0.35?40 : r<0.68?25 : 15;
+    deals.push({id:it.id, pct, rare: it.daily===true || pct>=60});
+  }
+  return deals;
+}
+function dealRow(d){
+  const it=findItem(d.id); if(!it) return '';
+  const price=Math.max(1,Math.round(it.cost*(1-d.pct/100)));
+  const owns=ownsItem(it);
+  const equipped=(it.kind==='theme'&&equipTheme===it.val)||(it.kind==='sun'&&equipSun===it.val);
+  let action;
+  if(equipped) action=`<span class="owned">Equipped</span>`;
+  else if(owns && it.kind!=='consumable') action=(it.kind==='theme'||it.kind==='sun')?`<button class="buybtn equip" data-equip="${it.kind}:${it.val}">Equip</button>`:`<span class="owned">Owned</span>`;
+  else action=`<button class="buybtn" data-deal="${it.id}" data-price="${price}" ${coins<price?'disabled':''}><span class="wasprice">🪙${it.cost}</span>🪙 ${price}</button>`;
+  return `<div class="shopitem rb-${it.rarity||'common'} ${d.rare?'rare':''}"><div class="ico">${it.icon}</div>
+    <div class="info"><div class="iname">${it.name} ${rarityTag(it.rarity)} <span class="deal">−${d.pct}%</span></div>
+    <div class="idesc">${it.desc}</div></div>
+    <div class="acts"><button class="prevbtn" data-preview="${it.id}">👁 Preview</button>${action}</div></div>`;
+}
+function msToMidnight(){ const n=new Date(), m=new Date(n); m.setHours(24,0,0,0); return m-n; }
+function fmtReset(){ const ms=msToMidnight(), h=Math.floor(ms/3.6e6), m=Math.floor(ms%3.6e6/6e4); return `resets in ${h}h ${m}m`; }
+
 /* ---------- shop rendering ---------- */
 function ownsItem(it){
   if(it.kind==='consumable') return it.id==='freeze'?freezes : it.id==='snooze'?snoozeTokens : easyPasses;
@@ -1144,15 +1370,16 @@ function itemButton(it){
 function itemRow(it){
   const own=ownsItem(it);
   const ownTag = (it.kind==='consumable' && own)?`<span class="owned">×${own}</span>`:'';
-  return `<div class="shopitem"><div class="ico">${it.icon}</div>
-    <div class="info"><div class="iname">${it.name} ${ownTag}</div><div class="idesc">${it.desc}</div></div>
-    ${itemButton(it)}</div>`;
+  return `<div class="shopitem rb-${it.rarity||'common'}"><div class="ico">${it.icon}</div>
+    <div class="info"><div class="iname">${it.name} ${rarityTag(it.rarity)} ${ownTag}</div><div class="idesc">${it.desc}</div></div>
+    <div class="acts"><button class="prevbtn" data-preview="${it.id}">👁 Preview</button>${itemButton(it)}</div></div>`;
 }
 function renderShop(){
   const wrap=$('#shopItems');
   const mult=coinMult();
-  let html = `<div class="grouplabel">Power-ups</div>` + CATALOG.power.map(itemRow).join('');
-  html += `<div class="grouplabel">Looks</div>` + CATALOG.looks.map(itemRow).join('');
+  let html = `<div class="grouplabel">✨ Daily Deals <span class="hintpill" id="dealReset">${fmtReset()}</span></div>` + dailyDeals().map(dealRow).join('');
+  html += `<div class="grouplabel">Power-ups</div>` + CATALOG.power.filter(i=>!i.daily).map(itemRow).join('');
+  html += `<div class="grouplabel">Looks</div>` + CATALOG.looks.filter(i=>!i.daily).map(itemRow).join('');
   // personalization name field
   if(personality){
     html += `<div class="shopitem"><div class="ico">🙂</div><div class="info">
@@ -1170,14 +1397,55 @@ function renderShop(){
   wrap.innerHTML=html;
 
   wrap.querySelectorAll('[data-buy]').forEach(b=>b.onclick=()=>buyItem(b.dataset.buy));
+  wrap.querySelectorAll('[data-deal]').forEach(b=>b.onclick=()=>buyItem(b.dataset.deal, +b.dataset.price));
   wrap.querySelectorAll('[data-equip]').forEach(b=>b.onclick=()=>equipItem(b.dataset.equip));
+  wrap.querySelectorAll('[data-preview]').forEach(b=>b.onclick=()=>openPreview(b.dataset.preview));
   const ni=$('#nameInput'); if(ni) ni.onchange=async()=>{ userName=ni.value.trim().slice(0,16); await persistProgress(); refreshStats(); toast(userName?`Hey ${userName} 👋`:'Name cleared'); };
   const pb=$('#prestigeBtn'); if(pb && streak>=30) pb.onclick=()=>doPrestige();
 }
 function findItem(id){ return [...CATALOG.power,...CATALOG.looks].find(x=>x.id===id); }
-async function buyItem(id){
-  const it=findItem(id); if(!it || coins<it.cost) return;
-  coins-=it.cost;
+function mockHTML(t, skinId){
+  return `<div class="phoneMock" style="--mg:${t.gold};--mc:${t.coral};--mn:${t.night};--mi:${t.indigo}">
+    <div class="pmTop">☀ daybreak</div>
+    <div class="pmEye">no mercy mornings</div>
+    <div class="pmTitle">Get up.</div>
+    ${sunMockMarkup(skinId||'default')}
+    <div class="pmTime">7:00 AM</div>
+  </div>`;
+}
+function openPreview(id){
+  const it=findItem(id); if(!it) return;
+  const b=$('#previewBody'); let html='';
+  const owns=ownsItem(it);
+  if(it.kind==='theme'){
+    html=`<h3>${it.name}</h3>${mockHTML(THEMES[it.val], equipSun)}<p>Here's your home screen in this sky.</p>`;
+  } else if(it.kind==='sun'){
+    html=`<h3>${it.name}</h3>${mockHTML(THEMES[equipTheme]||THEMES.default, it.val)}<p>This is the orb you'll wake up to.</p>`;
+  } else if(it.kind==='unlock'){
+    html=`<h3>${it.icon} ${it.name}</h3><div class="previewGlyph" style="margin:14px 0">🔤</div>
+      <p>Adds sassier wake-up lines like “Nice try bed, you almost had me” — and lets Daybreak greet you by name.</p>`;
+  } else {
+    html=`<h3>${it.icon} ${it.name}</h3><div class="previewGlyph" style="margin:14px 0">${it.icon}</div><p>${it.desc}</p>`;
+  }
+  // action inside the modal
+  if(!owns && it.kind!=='theme' && it.kind!=='sun') html+=`<button class="modalbtn" id="previewBuy" ${coins<it.cost?'disabled':''}>${coins<it.cost?'Need more coins':'Buy 🪙 '+it.cost}</button>`;
+  else if(it.kind==='theme'||it.kind==='sun'){
+    const equipped = (it.kind==='theme'?equipTheme===it.val:equipSun===it.val);
+    if(equipped) html+=`<button class="modalbtn" disabled>Equipped</button>`;
+    else if(owns) html+=`<button class="modalbtn" id="previewEquip">Equip</button>`;
+    else html+=`<button class="modalbtn" id="previewBuy" ${coins<it.cost?'disabled':''}>${coins<it.cost?'Need more coins':'Buy 🪙 '+it.cost}</button>`;
+  }
+  b.innerHTML=html;
+  $('#previewModal').classList.add('show');
+  const pb=$('#previewBuy'); if(pb) pb.onclick=async()=>{ await buyItem(it.id); closePreview(); };
+  const pe=$('#previewEquip'); if(pe) pe.onclick=()=>{ equipItem(`${it.kind}:${it.val}`); closePreview(); };
+}
+function closePreview(){ $('#previewModal').classList.remove('show'); }
+async function buyItem(id, priceOverride){
+  const it=findItem(id); if(!it) return;
+  const cost = (priceOverride!=null)?priceOverride:it.cost;
+  if(coins<cost) return;
+  coins-=cost;
   if(it.kind==='consumable'){ if(id==='freeze')freezes++; else if(id==='snooze')snoozeTokens++; else easyPasses++; }
   else if(it.kind==='perk') insurance=true;
   else if(it.kind==='unlock'){ personality=true; }
@@ -1223,7 +1491,7 @@ async function init(){
   themesOwned  = await load('themesOwned',['default'])||['default'];
   sunsOwned    = await load('sunsOwned',['default'])||['default'];
   equipTheme   = await load('equipTheme','default')||'default';
-  equipSun     = await load('equipSun','☀️')||'☀️';
+  equipSun     = await load('equipSun','default')||'default';
   personality  = await load('personality',false)||false;
   userName     = await load('userName','')||'';
   prestige     = await load('prestige',0)||0;
@@ -1232,6 +1500,10 @@ async function init(){
   frozenDates= await load('frozenDates', [])||[];
   lastDone   = await load('lastDone', null);
   if(lastDone && !/^\d{4}-\d{2}-\d{2}$/.test(lastDone)) lastDone=null;
+  // migrate cosmetics to the new skin-id system (old versions stored emoji glyphs)
+  sunsOwned = (sunsOwned||[]).filter(x=>SUNS[x]); if(!sunsOwned.includes('default')) sunsOwned.push('default');
+  if(!SUNS[equipSun]) equipSun='default';
+  if(!THEMES[equipTheme]) equipTheme='default';
   applyTheme(equipTheme); applySun(equipSun);
 
   // streak upkeep: if days were missed, spend freezes to bridge them, else reset
@@ -1256,17 +1528,18 @@ async function init(){
   }
 
   $('#alarmTime').value=settings.time;
-  $('#waketimeText').textContent=fmt(settings.time);
   $('#v-reps').textContent=settings.reps;
   $('#v-snoozes').textContent=settings.snoozes;
   $('#mathLevel').value=settings.mathLevel||'algebra';
   $('#mathLevel').onchange=e=>{ settings.mathLevel=e.target.value; save('settings',settings); };
   renderChips(); bindSteppers(); refreshStats(); updateArmState();
 
-  $('#alarmTime').onchange=e=>{ settings.time=e.target.value||'07:00'; $('#waketimeText').textContent=fmt(settings.time); save('settings',settings); };
-  $('#wakeCard').onclick=()=>{ const t=$('#alarmTime'); try{ t.showPicker(); }catch(e){ t.focus(); t.click(); } };
+  $('#alarmTime').onchange=e=>{ settings.time=e.target.value||'07:00'; save('settings',settings); };
   $('#shopBtn').onclick=()=>{ renderShop(); refreshStats(); show('shop'); };
   $('#shopBack').onclick=()=>show('setup');
+  $('#previewClose').onclick=closePreview;
+  $('#previewModal').onclick=e=>{ if(e.target.id==='previewModal') closePreview(); };
+  setInterval(()=>{ const e=$('#dealReset'); if(e && $('#s-shop').classList.contains('active')) e.textContent=fmtReset(); }, 30000);
 
   $('#armBtn').onclick=arm;
   $('#testBtn').onclick=()=>{ settings.time=$('#alarmTime').value; ring(); };
