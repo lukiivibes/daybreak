@@ -199,6 +199,11 @@
   .badge{font-size:22px;filter:grayscale(1);opacity:.35;transition:.2s}
   .badge.got{filter:none;opacity:1;text-shadow:0 0 12px var(--coral)}
   .buybtn.equip{background:rgba(255,244,230,.1);color:var(--cream);border:1px solid var(--coral)}
+  .posewrap{position:relative;width:min(86vw,380px);aspect-ratio:4/3;border-radius:20px;overflow:hidden;border:1px solid var(--line);background:#000}
+  .posewrap video,.posewrap canvas{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+  .repbadge{position:absolute;top:10px;left:10px;background:rgba(14,11,34,.72);padding:6px 12px;border-radius:12px;
+    font-family:var(--display);font-weight:800;font-size:26px;color:var(--cream);display:flex;align-items:baseline;gap:4px;z-index:3}
+  .repbadge small{font-size:13px;color:var(--dim);font-weight:600}
 
   /* shop items */
   .shopitem{display:flex;align-items:center;gap:14px;background:rgba(255,244,230,.04);border:1px solid var(--line);border-radius:18px;padding:16px;margin-bottom:12px}
@@ -396,7 +401,8 @@
 <script>
 /* ===================== state + storage ===================== */
 const CHALLENGES = [
-  {id:'pushups', icon:'💪', name:'Push-ups',  req:'motion', type:'motion', label:'PUSH-UPS', prompt:n=>`Drop and give me ${n}`, sub:'Phone on the floor under your chest. Every rep counts.'},
+  {id:'pushups', icon:'💪', name:'Push-ups (motion)', req:'motion', type:'motion', label:'PUSH-UPS', prompt:n=>`Drop and give me ${n}`, sub:'Strap the phone to your arm or hold it. Each rep needs a real down-and-up.'},
+  {id:'pushupsCam',icon:'🎥', name:'Push-ups (camera)', req:'camera', type:'pose', label:'PUSH-UPS', prompt:n=>`Drop and give me ${n}`, sub:'Prop your phone sideways a few feet away so it sees your whole body.'},
   {id:'situps',  icon:'🔥', name:'Sit-ups',   req:'motion', type:'motion', label:'SIT-UPS',  prompt:n=>`${n} sit-ups, let's go`, sub:'Hold the phone to your chest and crunch.'},
   {id:'grass',   icon:'🌱', name:'Touch grass',req:'camera', type:'photo',  prompt:()=>'Go outside & touch grass', sub:'Step outside and photograph real grass or the open sky.', bright:true},
   {id:'splash',  icon:'💦', name:'Cold splash',req:'camera', type:'photo',  prompt:()=>'Splash your face awake', sub:'Cold water on the face, then snap a pic at the sink.'},
@@ -420,7 +426,7 @@ async function save(k,v){
   try{ if(window.storage) await window.storage.set(k, JSON.stringify(v)); }catch(e){}
 }
 
-let settings = {time:'07:00', enabled:['pushups','grass','bed','object'], reps:10, snoozes:1, mathLevel:'algebra'};
+let settings = {time:'07:00', enabled:['pushups','pushupsCam','grass','bed','object'], reps:10, snoozes:1, mathLevel:'algebra'};
 let streak = 0, coins = 0, freezes = 0;
 let snoozeTokens = 0, easyPasses = 0, insurance = false;
 let themesOwned = ['default'], sunsOwned = ['default'];
@@ -565,6 +571,12 @@ function ring(){
   setDawn(0);
   show('ringing');
   startAlarm();
+  const lab=document.querySelector('#s-ringing .lab');
+  // browsers block sound until the user touches the page — first tap anywhere unlocks it
+  function kick(){ try{ if(ac && ac.state==='suspended') ac.resume(); }catch(e){} if(!audioOn) startAlarm();
+    if(lab) lab.textContent='now beat the challenge to silence it'; document.removeEventListener('pointerdown',kick,true); }
+  if(ac && ac.state==='running' && audioOn){ if(lab) lab.textContent='now beat the challenge to silence it'; }
+  else { if(lab) lab.textContent='🔇 tap anywhere to start the alarm'; document.addEventListener('pointerdown',kick,true); }
 }
 function updateSnoozeBtn(){
   const left=Math.max(0, settings.snoozes-runtime.snoozeUsed);
@@ -648,6 +660,7 @@ function startChallenge(){
   if(!c){ show('setup'); return; }
   runtime.active=c;
   if(c.type==='motion') motionChallenge(c);
+  else if(c.type==='pose') poseChallenge(c);
   else if(c.type==='tap') tapChallenge(c);
   else if(c.type==='math') mathChallenge(c);
   else if(c.type==='type') typeChallenge(c);
@@ -669,18 +682,24 @@ function motionChallenge(c){
   show('challenge');
   $('#bail').onclick=()=>{ teardownMotion(); startChallenge(); };
 
-  let count=0, ready=true, baseline=9.8, last=0;
+  let count=0, baseline=9.8, last=0, peaked=false, quietStart=0;
   const need = ()=>{ $('#repNum').textContent=count;
     $('#repBar').style.width=(count/target*100)+'%';
     setDawn(Math.min(1, count/target));
     if(count>=target){ teardownMotion(); succeed(c); } };
 
+  // a rep = a strong push (peak) FOLLOWED BY a brief rest. Shaking never rests, so it won't count.
   function onMotion(e){
     const a=e.accelerationIncludingGravity||e.acceleration; if(!a)return;
     const mag=Math.sqrt((a.x||0)**2+(a.y||0)**2+(a.z||0)**2);
     const now=Date.now();
-    if(ready && mag>baseline+5.5 && now-last>500){ ready=false; }
-    if(!ready && mag<baseline+2.0 && now-last>500){ ready=true; last=now; count++; need(); navigator.vibrate&&navigator.vibrate(40); }
+    if(mag > baseline+6){ peaked=true; quietStart=0; }        // a genuine rep generates a clear spike
+    else if(peaked && mag < baseline+1.6){                     // then the body settles at the top
+      if(!quietStart) quietStart=now;
+      else if(now-quietStart>200 && now-last>800){              // held still briefly + min cadence
+        count++; last=now; peaked=false; quietStart=0; need(); navigator.vibrate&&navigator.vibrate(40);
+      }
+    } else { quietStart=0; }
   }
   function begin(){ window.addEventListener('devicemotion', onMotion); runtime._motion=onMotion;
     $('#repHint').textContent='Move! Each full rep adds one.'; }
@@ -697,6 +716,109 @@ function motionChallenge(c){
 function teardownMotion(){ if(runtime._motion){ window.removeEventListener('devicemotion',runtime._motion); runtime._motion=null; } }
 function fallbackTimer(c,target){ // motion permission denied -> switch to tap, no camera/sensor needed
   tapChallenge(c, `Motion's off — tap ${c.name.toLowerCase()} out instead`, 60);
+}
+
+/* --- camera push-ups via MoveNet pose detection (lazy-loaded) --- */
+function loadScript(src){ return new Promise((res,rej)=>{ const s=document.createElement('script'); s.src=src; s.async=true; s.onload=res; s.onerror=()=>rej(new Error('script load failed')); document.head.appendChild(s); }); }
+let poseLibPromise=null;
+function ensurePoseLib(){
+  if(window.poseDetection && window.tf) return Promise.resolve(true);
+  if(!poseLibPromise){
+    poseLibPromise=(async()=>{
+      await loadScript('https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.20.0/dist/tf.min.js');
+      await loadScript('https://cdn.jsdelivr.net/npm/@tensorflow-models/pose-detection@2.1.3/dist/pose-detection.min.js');
+      return !!(window.poseDetection && window.tf);
+    })().catch(()=>{ poseLibPromise=null; return false; });
+  }
+  return poseLibPromise;
+}
+function bailToTap(msg){ stopPose(); tapChallenge(CHALLENGES.find(x=>x.id==='tap'), msg); }
+function stopPose(){ if(runtime._pose){ try{runtime._pose.stop();}catch(e){} runtime._pose=null; } stopCam(); }
+
+async function poseChallenge(c){
+  const target=settings.reps;
+  const body=$('#challengeBody');
+  body.innerHTML=`
+    <div class="ringlabel">${c.label} · camera</div>
+    <div class="prompt" style="font-size:clamp(20px,5.5vw,26px)">${c.prompt(target)}</div>
+    <div class="posewrap"><video id="cam" autoplay playsinline muted></video><canvas id="poseCv"></canvas>
+      <div class="repbadge"><span id="repNum">0</span><small>/ ${target}</small></div></div>
+    <div class="pbar"><i id="repBar"></i></div>
+    <div class="promptsub" id="poseHint">${c.sub}</div>
+    <div class="stack">
+      <button class="tinybtn" id="bailP">switch challenge</button>
+      <button class="tinybtn" id="noCamP" style="color:var(--coral)">📷 camera trouble? do a no-camera one</button>
+    </div>`;
+  show('challenge');
+  $('#bailP').onclick=()=>{ stopPose(); startChallenge(); };
+  $('#noCamP').onclick=()=>bailToTap('No camera — tap your way out instead');
+
+  // 1) camera
+  try{
+    stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user', width:{ideal:640}, height:{ideal:480}}});
+    $('#cam').srcObject=stream;
+    await ($('#cam').play&&$('#cam').play().catch(()=>{}));
+  }catch(e){ return bailToTap("Camera's off — tap your way out instead"); }
+
+  // 2) model (lazy) — with a hard timeout so a slow network can never trap you
+  $('#poseHint').textContent='Loading the pose detector… (first time only)';
+  let ok=false;
+  try{ ok=await Promise.race([ ensurePoseLib(), new Promise(r=>setTimeout(()=>r('timeout'),15000)) ]); }catch(e){ ok=false; }
+  if(ok==='timeout') return bailToTap('Camera AI took too long to load — tap your way out instead');
+  if(!ok || !window.poseDetection) return bailToTap('Could not load the camera AI — tap your way out instead');
+
+  let detector;
+  try{
+    try{ await window.tf.setBackend('webgl'); }catch(e){}
+    await window.tf.ready();
+    detector=await window.poseDetection.createDetector(
+      window.poseDetection.SupportedModels.MoveNet,
+      {modelType: window.poseDetection.movenet.modelType.SINGLEPOSE_LIGHTNING});
+  }catch(e){ return bailToTap('Pose detector failed to start — tap your way out instead'); }
+
+  $('#poseHint').textContent="Get into a push-up position — I'm watching.";
+  const v=$('#cam'), cv=$('#poseCv'), ctx=cv.getContext('2d');
+  let count=0, st='up', lastRep=0, running=true, lastInfer=0;
+  runtime._pose={ stop:()=>{ running=false; try{detector.dispose&&detector.dispose();}catch(e){} } };
+
+  function ang(a,b,d){ const ab=[a.x-b.x,a.y-b.y], cb=[d.x-b.x,d.y-b.y];
+    const dot=ab[0]*cb[0]+ab[1]*cb[1]; const m=(Math.hypot(ab[0],ab[1])*Math.hypot(cb[0],cb[1]))||1;
+    return Math.acos(Math.max(-1,Math.min(1,dot/m)))*180/Math.PI; }
+  function draw(kp){ if(cv.width!==v.videoWidth){ cv.width=v.videoWidth||640; cv.height=v.videoHeight||480; }
+    ctx.clearRect(0,0,cv.width,cv.height);
+    const pairs=[[5,7],[7,9],[6,8],[8,10],[5,6],[5,11],[6,12],[11,12],[11,13],[13,15],[12,14],[14,16]];
+    ctx.lineWidth=Math.max(2,cv.width/170); ctx.strokeStyle='rgba(255,194,75,.9)';
+    pairs.forEach(([a,b])=>{ if(kp[a].score>.3&&kp[b].score>.3){ ctx.beginPath(); ctx.moveTo(kp[a].x,kp[a].y); ctx.lineTo(kp[b].x,kp[b].y); ctx.stroke(); }});
+    ctx.fillStyle='rgba(255,107,74,.95)';
+    kp.forEach(p=>{ if(p.score>.3){ ctx.beginPath(); ctx.arc(p.x,p.y,Math.max(3,cv.width/130),0,7); ctx.fill(); }});
+  }
+  async function loop(ts){
+    if(!running) return;
+    if(!lastInfer || ts-lastInfer>70){            // ~14 fps — smooth enough for push-ups, easy on battery
+      lastInfer=ts;
+      let poses=[];
+      try{ poses=await detector.estimatePoses(v,{flipHorizontal:false}); }catch(e){}
+      if(poses && poses[0]){
+        const kp=poses[0].keypoints; draw(kp);
+        const A=[]; const ok2=(i)=>kp[i]&&kp[i].score>.3;
+        if(ok2(5)&&ok2(7)&&ok2(9)) A.push(ang(kp[5],kp[7],kp[9]));
+        if(ok2(6)&&ok2(8)&&ok2(10)) A.push(ang(kp[6],kp[8],kp[10]));
+        if(A.length){
+          const elbow=A.reduce((a,b)=>a+b,0)/A.length, now=Date.now();
+          if(st==='up' && elbow<100){ st='down'; $('#poseHint').textContent='Down… now push back up'; }
+          else if(st==='down' && elbow>150 && now-lastRep>500){
+            st='up'; count++; lastRep=now;
+            $('#repNum').textContent=count; $('#repBar').style.width=(count/target*100)+'%'; setDawn(Math.min(1,count/target));
+            navigator.vibrate&&navigator.vibrate(45);
+            $('#poseHint').textContent='Nice — go down for the next';
+            if(count>=target){ stopPose(); succeed(c); return; }
+          }
+        } else { $('#poseHint').textContent='Can\'t see your arms — back up so your whole body is in frame.'; }
+      }
+    }
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
 }
 
 /* --- tap the sun (no sensors, also the camera fallback) --- */
@@ -859,9 +981,11 @@ async function cameraChallenge(c){
       <button class="btn" id="retake" hidden>Retake</button>
       <button class="btn" id="accept" hidden>This counts — wake up</button>
       <button class="tinybtn" id="bail2">switch challenge</button>
+      <button class="tinybtn" id="noCam" style="color:var(--coral)">📷 camera not working? do a no-camera one</button>
     </div>`;
   show('challenge');
   $('#bail2').onclick=()=>{ stopCam(); startChallenge(); };
+  $('#noCam').onclick=()=>{ stopCam(); tapChallenge(CHALLENGES.find(x=>x.id==='tap'), 'No camera — tap your way out instead'); };
 
   try{
     const facing = (c.id==='object'||c.id==='grass'||c.id==='breakfast') ? 'environment' : 'user';
@@ -944,6 +1068,7 @@ async function persistProgress(){
 
 async function succeed(c){
   stopAlarm(); stopCam(); teardownMotion();
+  if(runtime._pose){ try{runtime._pose.stop();}catch(e){} runtime._pose=null; }
   setDawn(1);
   const today=dayKey();
   let firstToday=false, kept=false, award=0;
@@ -1081,12 +1206,13 @@ function doPrestige(){
 async function init(){
   const s=await load('settings', null); if(s) settings=Object.assign(settings,s);
   // migration v3: backups are opt-in only — remove any that an earlier version auto-enabled
-  if(settings.migv!==3){
+  if(settings.migv!==4){
     settings.enabled = settings.enabled.filter(id=>{
       const ch=CHALLENGES.find(x=>x.id===id); return ch && ch.req!=='none';
     });
+    if(!settings.enabled.includes('pushupsCam')) settings.enabled.push('pushupsCam');
     if(settings.enabled.length===0) settings.enabled=['pushups','grass','bed','object'];
-    settings.migv=3; save('settings',settings);
+    settings.migv=4; save('settings',settings);
   }
   streak = await load('streak', 0)||0;
   coins  = await load('coins', 0)||0;
