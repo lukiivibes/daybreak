@@ -186,11 +186,24 @@
   .shopbtn{margin-left:auto;font-family:var(--ui);font-weight:700;font-size:14px;color:var(--gold);background:rgba(255,194,75,.12);
     border:1px solid rgba(255,194,75,.35);border-radius:12px;padding:10px 16px;cursor:pointer}
   .shopbtn:active{transform:scale(.96)}
-  .cal{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-top:16px}
-  .cell{aspect-ratio:1;border-radius:6px;background:rgba(255,244,230,.06)}
-  .cell.done{background:linear-gradient(135deg,var(--gold),var(--coral))}
-  .cell.frozen{background:#5a7bd1}
-  .cell.today{outline:2px solid var(--cream);outline-offset:-2px}
+  .calhead{font-family:var(--display);font-weight:800;font-size:14px;margin-top:16px;margin-bottom:8px;text-align:center}
+  .cal{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}
+  .cdow{text-align:center;font-size:9px;color:var(--dim);font-weight:700;padding-bottom:2px}
+  .cell{aspect-ratio:1;border-radius:6px;background:rgba(255,244,230,.06);display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--dim);font-weight:600}
+  .cell.empty{background:none}
+  .cell.future{opacity:.4}
+  .cell.done{background:linear-gradient(135deg,var(--gold),var(--coral));color:#190a05}
+  .cell.frozen{background:#5a7bd1;color:#fff}
+  .cell.today{outline:2px solid var(--cream);outline-offset:-2px;color:var(--cream)}
+  .cell.today.done{color:#190a05}
+  .wakestats{width:100%;max-width:320px;margin:14px auto 0;display:flex;flex-direction:column;gap:7px}
+  .ws{display:flex;justify-content:space-between;gap:12px;font-size:13px;background:rgba(255,244,230,.05);border:1px solid var(--line);border-radius:12px;padding:9px 13px}
+  .ws span{color:var(--dim)}
+  .ws b{color:var(--cream);text-align:right;font-weight:600}
+  .lifestats{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:14px}
+  .ls{background:rgba(255,244,230,.05);border:1px solid var(--line);border-radius:12px;padding:10px 12px;text-align:center}
+  .ls b{font-family:var(--display);font-weight:800;font-size:20px;display:block;line-height:1}
+  .ls span{font-size:11px;color:var(--dim)}
   .callegend{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:11px;color:var(--dim);margin-top:12px}
   .dotleg{width:11px;height:11px;border-radius:3px;display:inline-block;margin-left:8px}
   .dotleg.done{background:linear-gradient(135deg,var(--gold),var(--coral))}
@@ -302,6 +315,7 @@
   .shopitem.rb-mythic{border-color:rgba(255,91,192,.35)}
   .shopitem.rb-epic{border-color:rgba(177,91,255,.3)}
   .modalbtn{font-family:var(--display);font-weight:800;font-size:16px;border:none;border-radius:14px;padding:13px;width:100%;margin-top:8px;cursor:pointer;color:#190a05;background:linear-gradient(135deg,var(--gold),var(--coral))}
+  .modalbtn.alt{background:rgba(255,244,230,.08);color:var(--cream);border:1px solid var(--line)}
   .acts{display:flex;flex-direction:column;gap:6px;align-items:flex-end;flex:none}
   .prevbtn{background:rgba(255,244,230,.08);border:1px solid var(--line);color:var(--cream);border-radius:10px;padding:7px 11px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap}
   .prevbtn:active{transform:scale(.95)}
@@ -335,6 +349,28 @@
 
 <div class="app">
 
+  <!-- ========== ONBOARDING ========== -->
+  <section id="s-onboard" class="screen">
+    <div class="orbwrap">
+      <div class="orb sunOrb" id="onboardOrb" style="width:min(44vw,170px)"></div>
+      <div class="eyebrow" style="margin-top:20px">welcome to</div>
+      <div class="h1" style="font-size:clamp(36px,13vw,54px)">Daybreak</div>
+      <div class="sub" style="text-align:center;margin-top:10px">The alarm that makes you <i>earn</i> waking up. Let's set up your profile.</div>
+      <div class="card" style="width:100%;max-width:360px;margin-top:22px;text-align:left">
+        <div class="wakelabel">What should I call you?</div>
+        <input id="obName" class="lvlsel" style="width:100%;margin-top:8px" maxlength="16" placeholder="your name" />
+      </div>
+      <div class="card" style="width:100%;max-width:360px;text-align:left">
+        <div class="wakelabel">When do you want to wake up?</div>
+        <input type="time" id="obTime" class="timefield" value="07:00" style="font-size:clamp(28px,9vw,40px)" />
+      </div>
+      <div class="stack" style="max-width:360px">
+        <button class="btn" id="obStart">Let's go →</button>
+      </div>
+      <div class="footnote">Your streak, coins, and unlocks save right here on this device.</div>
+    </div>
+  </section>
+
   <!-- ========== SETUP ========== -->
   <section id="s-setup" class="screen active">
     <div class="topbar">
@@ -343,7 +379,7 @@
     </div>
 
     <div class="hero">
-      <div class="eyebrow">no mercy mornings</div>
+      <div class="eyebrow" id="homeEyebrow">no mercy mornings</div>
       <div class="h1">Get up.<br>For real this time.</div>
     </div>
 
@@ -358,7 +394,9 @@
         <div class="stat"><div class="statbig" id="cCoins">0</div><div class="statlab">🪙 sun coins</div></div>
         <button class="shopbtn" id="shopBtn">Shop →</button>
       </div>
+      <div class="calhead" id="calMonth"></div>
       <div class="cal" id="cal"></div>
+      <div class="lifestats" id="lifeStats"></div>
       <div class="badges" id="badges"></div>
       <div class="callegend"><span class="dotleg done"></span>woke up <span class="dotleg frozen"></span>freeze used <span class="dotleg miss"></span>missed</div>
     </div>
@@ -399,6 +437,7 @@
 
     <button class="btn" id="armBtn">Arm alarm</button>
     <button class="btn ghost" id="testBtn" style="margin-top:10px">Test it now →</button>
+    <button class="btn ghost" id="workoutBtn" style="margin-top:10px">💪 Workout for coins (3–5 each)</button>
 
     <details>
       <summary>⚡ Auto-open when your phone alarm rings (iPhone)</summary>
@@ -474,6 +513,7 @@
       <div class="orb"><div><div class="num">🌅</div></div></div>
       <div class="prompt" id="successMsg">You're up. Nice.</div>
       <div class="promptsub" id="successNote">The sun's up and so are you.</div>
+      <div class="wakestats" id="successStats"></div>
       <div class="streak" style="margin-top:14px;font-size:16px">🔥 <b id="streakNum3">1</b> day streak · 🪙 <b id="cCoins2">0</b></div>
       <div class="stack">
         <button class="btn" id="doneBtn">Done</button>
@@ -525,14 +565,18 @@ const CHALLENGES = [
 ];
 const OBJECTS = ['the kitchen sink','a clean spoon','the fridge','your toothbrush','a houseplant','the front door','a roll of paper towels','a coffee mug','a cereal box','the bathroom mirror','a pair of shoes','the microwave'];
 
-const mem = {}; // fallback if window.storage missing
+const mem = {}; // last-resort fallback
+const hasWS = !!(window.storage && window.storage.get);
+let LS=null; try{ LS=window.localStorage; const t='__db_t'; LS.setItem(t,'1'); LS.removeItem(t); }catch(e){ LS=null; }
 async function load(k,def){
-  try{ if(window.storage){const r=await window.storage.get(k); return r?JSON.parse(r.value):def;} }catch(e){}
+  try{ if(hasWS){ const r=await window.storage.get(k); return r?JSON.parse(r.value):def; } }catch(e){}
+  try{ if(LS){ const v=LS.getItem('daybreak:'+k); if(v!=null) return JSON.parse(v); } }catch(e){}
   return (k in mem)?mem[k]:def;
 }
 async function save(k,v){
   mem[k]=v;
-  try{ if(window.storage) await window.storage.set(k, JSON.stringify(v)); }catch(e){}
+  try{ if(hasWS){ await window.storage.set(k, JSON.stringify(v)); return; } }catch(e){}
+  try{ if(LS){ LS.setItem('daybreak:'+k, JSON.stringify(v)); } }catch(e){}
 }
 
 let settings = {time:'07:00', enabled:['pushups','pushupsCam','grass','bed','object'], reps:10, snoozes:1, mathLevel:'algebra'};
@@ -541,7 +585,9 @@ let snoozeTokens = 0, easyPasses = 0, insurance = false;
 let themesOwned = ['default'], sunsOwned = ['default'];
 let equipTheme = 'default', equipSun = 'default';
 let personality = false, userName = '';
-let prestige = 0, maxStreak = 0;
+let prestige = 0, maxStreak = 0, onboarded = false;
+let wakeLog = [];                 // [{d, secs, lateMin}] recent mornings for stats
+let workoutDate = '', workoutEarned = 0;   // daily coin-earning cap for workouts
 let doneDates = [];   // 'YYYY-MM-DD' days the alarm was beaten
 let frozenDates = []; // days a streak freeze covered
 let lastDone = null;
@@ -549,7 +595,7 @@ let runtime = {snoozeUsed:0, snoozeMins:[5,3,1], active:null, ringTimer:null};
 
 /* ===================== helpers ===================== */
 const $ = s=>document.querySelector(s);
-const screens = ['setup','armed','ringing','math','challenge','success','shop'];
+const screens = ['onboard','setup','armed','ringing','math','challenge','success','shop'];
 function show(name){
   screens.forEach(s=>$('#s-'+s).classList.toggle('active', s===name));
 }
@@ -586,31 +632,89 @@ function fmt(t){
 })();
 
 /* ===================== audio alarm ===================== */
-let ac, osc, gain, audioOn=false;
+let ac, masterGain, alarmTimer, audioOn=false, _noiseBuf=null;
+let customUnlocked=false, useCustomSound=false, customSoundURL='', customAudioEl=null;
+
+/* themed soundscapes — each skin gets a distinct character, not just beeps */
+const SOUNDS={
+  default:{kind:'beep',  freqs:[660,880], type:'sawtooth'},
+  moon:   {kind:'chime', notes:[523,659,784], type:'sine'},
+  ocean:  {kind:'wave'},
+  ember:  {kind:'crackle'},
+  galaxy: {kind:'arp',   notes:[330,494,659,988], type:'sine', step:0.16},
+  city:   {kind:'chime', notes:[392,523,587,784], type:'triangle'},
+  aurora: {kind:'pad',   notes:[440,554,659], type:'sine'},
+  solar:  {kind:'swell', base:110, type:'sawtooth'},            // low hum that crescendos
+  nebula: {kind:'pad',   notes:[330,392,494,587], type:'triangle', vibrato:true},
+  phoenix:{kind:'sweep', from:220, to:920, type:'sawtooth', chord:[440,554,659]},
+  prism:  {kind:'arp',   notes:[523,659,784,1047,1319], type:'triangle', step:0.11},
+  comet:  {kind:'sweep', from:1200, to:200, type:'sine'}
+};
+function noiseBuffer(){ if(_noiseBuf) return _noiseBuf;
+  const n=ac.sampleRate*1.5, b=ac.createBuffer(1,n,ac.sampleRate), d=b.getChannelData(0);
+  for(let i=0;i<n;i++) d[i]=Math.random()*2-1; _noiseBuf=b; return b; }
+function note(t,dur,freq,type,peak,dest,atk,rel){ atk=atk||0.01; rel=rel||0.08;
+  const o=ac.createOscillator(), g=ac.createGain(); o.type=type||'sine'; o.frequency.setValueAtTime(freq,t);
+  o.connect(g); g.connect(dest);
+  g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(Math.max(0.0002,peak),t+atk);
+  g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+  o.start(t); o.stop(t+dur+rel); return o; }
+function playCycle(p,t0,dest){
+  const T=p.type||'sine';
+  try{
+    if(p.kind==='beep'){ let t=t0; p.freqs.forEach(f=>{ note(t,0.16,f,T,0.2,dest); t+=0.22; }); return (t-t0)+0.18; }
+    if(p.kind==='chime'){ let t=t0; p.notes.forEach(f=>{ note(t,0.5,f,T,0.16,dest,0.02,0.3); t+=0.28; }); return (t-t0)+0.7; }
+    if(p.kind==='arp'){ const s=p.step||0.13; let t=t0; p.notes.forEach(f=>{ note(t,s*1.7,f,T,0.16,dest,0.005,0.12); t+=s; }); return (t-t0)+0.5; }
+    if(p.kind==='pad'){ const dur=2.6; p.notes.forEach((f,i)=>{ const o=ac.createOscillator(),g=ac.createGain();
+        o.type=T; o.frequency.value=f; o.detune.value=(i-1)*7; o.connect(g); g.connect(dest);
+        g.gain.setValueAtTime(0.0001,t0); g.gain.exponentialRampToValueAtTime(0.12,t0+0.9);
+        g.gain.setValueAtTime(0.12,t0+dur-0.6); g.gain.exponentialRampToValueAtTime(0.0001,t0+dur);
+        if(p.vibrato){ const lfo=ac.createOscillator(),lg=ac.createGain(); lfo.frequency.value=5; lg.gain.value=4; lfo.connect(lg); lg.connect(o.detune); lfo.start(t0); lfo.stop(t0+dur); }
+        o.start(t0); o.stop(t0+dur+0.1); }); return dur+0.5; }
+    if(p.kind==='swell'){ const dur=3.0, base=p.base||110;
+        const o=ac.createOscillator(),g=ac.createGain(); o.type=T; o.frequency.value=base; o.connect(g); g.connect(dest);
+        g.gain.setValueAtTime(0.0001,t0); g.gain.exponentialRampToValueAtTime(0.3,t0+dur*0.72); g.gain.exponentialRampToValueAtTime(0.0001,t0+dur);
+        const o2=ac.createOscillator(),g2=ac.createGain(); o2.type='sine'; o2.frequency.value=base*4; o2.connect(g2); g2.connect(dest);
+        g2.gain.setValueAtTime(0.0001,t0); g2.gain.exponentialRampToValueAtTime(0.08,t0+dur*0.82); g2.gain.exponentialRampToValueAtTime(0.0001,t0+dur);
+        o.start(t0); o.stop(t0+dur+0.1); o2.start(t0); o2.stop(t0+dur+0.1); return dur+0.25; }
+    if(p.kind==='sweep'){ const dur=1.3; if(p.chord) p.chord.forEach(f=>note(t0,0.5,f,'triangle',0.12,dest,0.01,0.3));
+        const o=ac.createOscillator(),g=ac.createGain(); o.type=T; o.frequency.setValueAtTime(p.from,t0);
+        o.frequency.exponentialRampToValueAtTime(Math.max(1,p.to),t0+dur); o.connect(g); g.connect(dest);
+        g.gain.setValueAtTime(0.0001,t0); g.gain.exponentialRampToValueAtTime(0.22,t0+0.1); g.gain.exponentialRampToValueAtTime(0.0001,t0+dur);
+        o.start(t0); o.stop(t0+dur+0.1); return dur+0.5; }
+    if(p.kind==='crackle'){ let t=t0; for(let i=0;i<7;i++){ const f=600+Math.random()*900; note(t,0.05,f,'triangle',0.18,dest,0.002,0.03); t+=0.12+Math.random()*0.12; } return (t-t0)+0.4; }
+    if(p.kind==='wave'){ const dur=2.2; const src=ac.createBufferSource(); src.buffer=noiseBuffer(); src.loop=true;
+        const lp=ac.createBiquadFilter(); lp.type='lowpass'; lp.frequency.setValueAtTime(280,t0);
+        lp.frequency.exponentialRampToValueAtTime(1200,t0+dur*0.5); lp.frequency.exponentialRampToValueAtTime(280,t0+dur);
+        const g=ac.createGain(); src.connect(lp); lp.connect(g); g.connect(dest);
+        g.gain.setValueAtTime(0.0001,t0); g.gain.exponentialRampToValueAtTime(0.2,t0+dur*0.5); g.gain.exponentialRampToValueAtTime(0.0001,t0+dur);
+        src.start(t0); src.stop(t0+dur+0.1); return dur+0.4; }
+  }catch(e){}
+  note(t0,0.2,660,'sawtooth',0.2,dest); return 0.5;
+}
+function loopAlarm(){
+  if(!audioOn) return;
+  let dur=0.8;
+  try{ const p=SOUNDS[equipSun]||SOUNDS.default; dur=playCycle(p, ac.currentTime+0.03, masterGain); }catch(e){}
+  alarmTimer=setTimeout(loopAlarm, Math.max(350, dur*1000));
+}
+function ensureCustomEl(){ if(!customSoundURL) return null;
+  if(!customAudioEl){ customAudioEl=new Audio(customSoundURL); customAudioEl.loop=true; }
+  return customAudioEl; }
 function startAlarm(){
   try{
     ac = ac || new (window.AudioContext||window.webkitAudioContext)();
     if(ac.state==='suspended') ac.resume();
-    const snd=(SUNS[equipSun]&&SUNS[equipSun].sound)||{type:'sawtooth',freqs:[660,880]};
-    osc = ac.createOscillator(); gain = ac.createGain();
-    osc.type=snd.type||'sawtooth'; osc.connect(gain); gain.connect(ac.destination);
-    gain.gain.value=0;
-    osc.start();
-    let i=0;
     audioOn=true;
-    (function beep(){
-      if(!audioOn) return;
-      const f=snd.freqs[i%snd.freqs.length]; i++;
-      osc.frequency.setValueAtTime(f, ac.currentTime);
-      gain.gain.setTargetAtTime(0.18, ac.currentTime, .008);
-      setTimeout(()=>{ if(audioOn&&gain) gain.gain.setTargetAtTime(0.0001, ac.currentTime, .03); }, 170);
-      setTimeout(beep, 360);
-    })();
+    if(useCustomSound && customSoundURL){ const el=ensureCustomEl(); if(el){ try{ el.currentTime=0; }catch(e){} el.play().catch(()=>{}); return; } }
+    masterGain = ac.createGain(); masterGain.connect(ac.destination); masterGain.gain.value=1;
+    loopAlarm();
   }catch(e){}
 }
 function stopAlarm(){
-  audioOn=false;
-  try{ if(gain) gain.gain.setTargetAtTime(0, ac.currentTime, .02); if(osc) setTimeout(()=>{try{osc.stop()}catch(e){}}, 80);}catch(e){}
+  audioOn=false; clearTimeout(alarmTimer);
+  try{ if(masterGain){ masterGain.gain.cancelScheduledValues(ac.currentTime); masterGain.gain.setValueAtTime(0.0001, ac.currentTime); } }catch(e){}
+  try{ if(customAudioEl){ customAudioEl.pause(); } }catch(e){}
 }
 
 /* ===================== SETUP screen ===================== */
@@ -677,6 +781,7 @@ function scheduleTick(){
 /* ===================== RINGING ===================== */
 function ring(){
   runtime.snoozeUsed=0;
+  runtime.ringStart=Date.now();
   $('#ringTime').textContent=fmt(settings.time||$('#alarmTime').value||'07:00');
   updateSnoozeBtn();
   setDawn(0);
@@ -780,24 +885,54 @@ function startChallenge(){
 }
 
 /* --- motion (push-ups / sit-ups) --- */
+/* ===================== workout: earn coins outside the alarm ===================== */
+const WORKOUT_CAP=150;
+const WORKOUT_C={icon:'💪', name:'Workout', label:'WORKOUT', req:'camera', type:'pose',
+  prompt:n=>'Earn coins — 3–5 per push-up', sub:'Every clean push-up banks coins. Daily cap keeps it fair.'};
+function workoutResetIfNewDay(){ const t=dayKey(); if(workoutDate!==t){ workoutDate=t; workoutEarned=0; } }
+function awardWorkoutRep(){
+  workoutResetIfNewDay();
+  if(workoutEarned>=WORKOUT_CAP) return 0;
+  let got=3+Math.floor(Math.random()*3);            // 3..5
+  if(workoutEarned+got>WORKOUT_CAP) got=WORKOUT_CAP-workoutEarned;
+  workoutEarned+=got; coins+=got;
+  save('coins',coins); save('workoutEarned',workoutEarned); save('workoutDate',workoutDate);
+  return got;
+}
+function startWorkout(){
+  workoutResetIfNewDay();
+  runtime.workout=true;
+  poseChallenge(WORKOUT_C);   // camera pose first; falls back to motion if camera/model unavailable
+}
+function finishWorkout(){
+  stopPose(); teardownMotion();
+  runtime.workout=false;
+  persistProgress(); refreshStats(); setDawn(0); show('setup');
+  toast(`Workout done — banked ${workoutEarned}🪙 today`);
+}
+function workoutFallback(){ stopPose(); runtime.workout=true; toast('Using motion instead'); motionChallenge(WORKOUT_C); }
+
 function motionChallenge(c){
+  const earn = !!runtime.workout;
   const target=settings.reps;
   const body=$('#challengeBody');
   body.innerHTML=`
-    <div class="ringlabel">${c.label}</div>
+    <div class="ringlabel">${earn?'WORKOUT · motion':c.label}</div>
     <div class="prompt">${c.prompt(target)}</div>
-    <div class="orb ringing"><div><div class="num" id="repNum">0</div><div class="lab" id="repLab">/ ${target}</div></div></div>
+    <div class="orb ringing"><div><div class="num" id="repNum">0</div><div class="lab" id="repLab">${earn?'reps':'/ '+target}</div></div></div>
     <div class="pbar"><i id="repBar"></i></div>
     <div class="promptsub" id="repHint">${c.sub}</div>
-    <div class="stack"><button class="tinybtn" id="bail">switch challenge</button></div>`;
+    <div class="stack">${earn
+      ? `<button class="btn" id="finishW">✓ Finish &amp; bank</button>`
+      : `<button class="tinybtn" id="bail">switch challenge</button>`}</div>`;
   show('challenge');
-  $('#bail').onclick=()=>{ teardownMotion(); startChallenge(); };
+  if(earn){ $('#finishW').onclick=finishWorkout; } else { $('#bail').onclick=()=>{ teardownMotion(); startChallenge(); }; }
 
   let count=0, baseline=9.8, last=0, peaked=false, quietStart=0;
   const need = ()=>{ $('#repNum').textContent=count;
-    $('#repBar').style.width=(count/target*100)+'%';
-    setDawn(Math.min(1, count/target));
-    if(count>=target){ teardownMotion(); succeed(c); } };
+    if(earn){ const got=awardWorkoutRep(); $('#repHint').textContent = got>0?`+${got} 🪙 · ${workoutEarned}/${WORKOUT_CAP} today`:`Daily cap hit (${WORKOUT_CAP}🪙) — still great exercise!`; }
+    else { $('#repBar').style.width=(count/target*100)+'%'; setDawn(Math.min(1, count/target));
+      if(count>=target){ teardownMotion(); succeed(c); } } };
 
   // a rep = a strong push (peak) FOLLOWED BY a brief rest. Shaking never rests, so it won't count.
   function onMotion(e){
@@ -813,16 +948,16 @@ function motionChallenge(c){
     } else { quietStart=0; }
   }
   function begin(){ window.addEventListener('devicemotion', onMotion); runtime._motion=onMotion;
-    $('#repHint').textContent='Move! Each full rep adds one.'; }
+    $('#repHint').textContent = earn?'Move! Each clean rep banks coins.':'Move! Each full rep adds one.'; }
 
   // iOS permission
   if(typeof DeviceMotionEvent!=='undefined' && typeof DeviceMotionEvent.requestPermission==='function'){
     $('#repHint').innerHTML='Tap the sun to enable motion, then start your reps.';
     $('#challengeBody').querySelector('.orb').onclick=()=>{
-      DeviceMotionEvent.requestPermission().then(p=>{ if(p==='granted') begin(); else fallbackTimer(c,target); }).catch(()=>fallbackTimer(c,target));
+      DeviceMotionEvent.requestPermission().then(p=>{ if(p==='granted') begin(); else (earn?finishWorkout():fallbackTimer(c,target)); }).catch(()=>earn?finishWorkout():fallbackTimer(c,target));
     };
   } else if(window.DeviceMotionEvent){ begin(); }
-  else { tapChallenge(c, `No motion sensor here — tap ${c.name.toLowerCase()} out instead`, 60); }
+  else { earn?(toast('No motion sensor for workout'),finishWorkout()):tapChallenge(c, `No motion sensor here — tap ${c.name.toLowerCase()} out instead`, 60); }
 }
 function teardownMotion(){ if(runtime._motion){ window.removeEventListener('devicemotion',runtime._motion); runtime._motion=null; } }
 function fallbackTimer(c,target){ // motion permission denied -> switch to tap, no camera/sensor needed
@@ -847,37 +982,39 @@ function bailToTap(msg){ stopPose(); tapChallenge(CHALLENGES.find(x=>x.id==='tap
 function stopPose(){ if(runtime._pose){ try{runtime._pose.stop();}catch(e){} runtime._pose=null; } stopCam(); }
 
 async function poseChallenge(c){
+  const earn = !!runtime.workout;
   const target=settings.reps;
+  const fail = (msg)=> earn ? workoutFallback() : bailToTap(msg);
   const body=$('#challengeBody');
   body.innerHTML=`
-    <div class="ringlabel">${c.label} · camera</div>
+    <div class="ringlabel">${earn?'WORKOUT · camera':c.label+' · camera'}</div>
     <div class="prompt" style="font-size:clamp(20px,5.5vw,26px)">${c.prompt(target)}</div>
     <div class="posewrap"><video id="cam" autoplay playsinline muted></video><canvas id="poseCv"></canvas>
       <div class="skel" id="poseSkel">warming up the camera…</div>
-      <div class="repbadge"><span id="repNum">0</span><small>/ ${target}</small></div></div>
+      <div class="repbadge"><span id="repNum">0</span><small>${earn?'reps':'/ '+target}</small></div></div>
     <div class="pbar"><i id="repBar"></i></div>
     <div class="promptsub" id="poseHint">${c.sub}</div>
     <div class="stack">
-      <button class="tinybtn" id="bailP">switch challenge</button>
-      <button class="tinybtn" id="noCamP" style="color:var(--coral)">📷 camera trouble? do a no-camera one</button>
+      ${earn?`<button class="btn" id="finishW">✓ Finish &amp; bank</button>`:`<button class="tinybtn" id="bailP">switch challenge</button>`}
+      <button class="tinybtn" id="noCamP" style="color:var(--coral)">📷 camera trouble? ${earn?'use motion':'do a no-camera one'}</button>
     </div>`;
   show('challenge');
-  $('#bailP').onclick=()=>{ stopPose(); startChallenge(); };
-  $('#noCamP').onclick=()=>bailToTap('No camera — tap your way out instead');
+  if(earn){ $('#finishW').onclick=finishWorkout; } else { $('#bailP').onclick=()=>{ stopPose(); startChallenge(); }; }
+  $('#noCamP').onclick=()=> earn ? workoutFallback() : bailToTap('No camera — tap your way out instead');
 
   // 1) camera
   try{
     stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user', width:{ideal:640}, height:{ideal:480}}});
     $('#cam').srcObject=stream;
     await ($('#cam').play&&$('#cam').play().catch(()=>{}));
-  }catch(e){ return bailToTap("Camera's off — tap your way out instead"); }
+  }catch(e){ return fail("Camera's off — tap your way out instead"); }
 
   // 2) model (lazy) — with a hard timeout so a slow network can never trap you
   $('#poseHint').textContent='Loading the pose detector… (first time only)';
   let ok=false;
   try{ ok=await Promise.race([ ensurePoseLib(), new Promise(r=>setTimeout(()=>r('timeout'),15000)) ]); }catch(e){ ok=false; }
-  if(ok==='timeout') return bailToTap('Camera AI took too long to load — tap your way out instead');
-  if(!ok || !window.poseDetection) return bailToTap('Could not load the camera AI — tap your way out instead');
+  if(ok==='timeout') return fail('Camera AI took too long to load — tap your way out instead');
+  if(!ok || !window.poseDetection) return fail('Could not load the camera AI — tap your way out instead');
 
   let detector;
   try{
@@ -886,9 +1023,9 @@ async function poseChallenge(c){
     detector=await window.poseDetection.createDetector(
       window.poseDetection.SupportedModels.MoveNet,
       {modelType: window.poseDetection.movenet.modelType.SINGLEPOSE_LIGHTNING});
-  }catch(e){ return bailToTap('Pose detector failed to start — tap your way out instead'); }
+  }catch(e){ return fail('Pose detector failed to start — tap your way out instead'); }
 
-  $('#poseHint').textContent="Get into a push-up position — I'm watching.";
+  $('#poseHint').textContent= earn?"Get into a push-up position — banking coins.":"Get into a push-up position — I'm watching.";
   const sk=$('#poseSkel'); if(sk) sk.remove();
   const v=$('#cam'), cv=$('#poseCv'), ctx=cv.getContext('2d');
   let count=0, st='up', lastRep=0, running=true, lastInfer=0;
@@ -920,11 +1057,15 @@ async function poseChallenge(c){
           const elbow=A.reduce((a,b)=>a+b,0)/A.length, now=Date.now();
           if(st==='up' && elbow<100){ st='down'; $('#poseHint').textContent='Down… now push back up'; }
           else if(st==='down' && elbow>150 && now-lastRep>500){
-            st='up'; count++; lastRep=now;
-            $('#repNum').textContent=count; $('#repBar').style.width=(count/target*100)+'%'; setDawn(Math.min(1,count/target));
+            st='up'; count++; lastRep=now; $('#repNum').textContent=count;
             navigator.vibrate&&navigator.vibrate(45);
-            $('#poseHint').textContent='Nice — go down for the next';
-            if(count>=target){ stopPose(); succeed(c); return; }
+            if(earn){ const got=awardWorkoutRep();
+              $('#poseHint').textContent = got>0?`+${got} 🪙 · ${workoutEarned}/${WORKOUT_CAP} today`:`Daily cap hit (${WORKOUT_CAP}🪙) — still great exercise!`;
+            } else {
+              $('#repBar').style.width=(count/target*100)+'%'; setDawn(Math.min(1,count/target));
+              $('#poseHint').textContent='Nice — go down for the next';
+              if(count>=target){ stopPose(); succeed(c); return; }
+            }
           }
         } else { $('#poseHint').textContent='Can\'t see your arms — back up so your whole body is in frame.'; }
       }
@@ -1170,6 +1311,7 @@ const CATALOG={
     {id:'snooze',   icon:'⏰', name:'Snooze Token',     cost:20,  kind:'consumable', desc:'A one-off extra snooze for a rough morning — no math to earn it.'},
     {id:'easy',     icon:'🎚️', name:'Easy Pass',        cost:30,  kind:'consumable', desc:'Swap a ringing challenge for a quick easy one.'},
     {id:'insurance',icon:'🛡️', name:'Streak Insurance', cost:300, kind:'perk',       desc:'If a 7+ day streak is about to break with no freeze, auto-buys one with your coins.'},
+    {id:'customsound',icon:'🎙️', name:'Custom Alarm Sound', cost:200, kind:'customsound', rarity:'epic', desc:'Upload a short clip (under ~1MB) and set it as your alarm tone.'},
   ],
   looks:[
     {id:'theme:ember',  icon:'🌋', name:'Ember Sky',    cost:120, kind:'theme', val:'ember',  rarity:'rare', desc:'Deep red volcanic dawn.'},
@@ -1233,13 +1375,18 @@ function playSkinSound(skinId){
   try{
     ac = ac || new (window.AudioContext||window.webkitAudioContext)();
     if(ac.state==='suspended') ac.resume();
-    const snd=(SUNS[skinId]&&SUNS[skinId].sound)||{type:'sawtooth',freqs:[660,880]};
-    const o=ac.createOscillator(), g=ac.createGain();
-    o.type=snd.type||'sine'; o.connect(g); g.connect(ac.destination); g.gain.value=0; o.start();
-    const t0=ac.currentTime, step=0.19, N=Math.max(5, snd.freqs.length*2);
-    for(let k=0;k<N;k++){ const f=snd.freqs[k%snd.freqs.length], t=t0+k*step;
-      o.frequency.setValueAtTime(f,t); g.gain.setTargetAtTime(0.2,t,.008); g.gain.setTargetAtTime(0.0001,t+step*0.7,.03); }
-    o.stop(t0+N*step+0.1);
+    if(skinId==='__custom'){
+      if(!customSoundURL) return;
+      const el=ensureCustomEl(); if(!el) return;
+      try{ el.loop=false; el.currentTime=0; }catch(e){}
+      el.play().catch(()=>{});
+      clearTimeout(playSkinSound._t); playSkinSound._t=setTimeout(()=>{ try{ el.pause(); }catch(e){} }, 4000);
+      return;
+    }
+    const g=ac.createGain(); g.connect(ac.destination); g.gain.value=1;
+    const p=SOUNDS[skinId]||SOUNDS.default;
+    const dur=playCycle(p, ac.currentTime+0.03, g);
+    setTimeout(()=>{ try{ g.disconnect(); }catch(e){} }, (dur+0.5)*1000);
   }catch(e){}
 }
 function applySun(skinId){ if(!SUNS[skinId]) skinId='default'; equipSun=skinId; renderSunInto($('#ringSunOrb'), skinId); }
@@ -1252,6 +1399,8 @@ async function persistProgress(){
   await save('personality',personality); await save('userName',userName);
   await save('prestige',prestige); await save('maxStreak',maxStreak);
   await save('doneDates',doneDates); await save('frozenDates',frozenDates); await save('lastDone',lastDone);
+  await save('customUnlocked',customUnlocked); await save('useCustomSound',useCustomSound);
+  await save('wakeLog',wakeLog); await save('workoutDate',workoutDate); await save('workoutEarned',workoutEarned);
 }
 
 async function succeed(c){
@@ -1271,6 +1420,13 @@ async function succeed(c){
     award=Math.round(10*coinMult());
     coins+=award;
     if(!doneDates.includes(today)) doneDates.push(today);
+    if(runtime.ringStart){
+      const secs=Math.round((Date.now()-runtime.ringStart)/1000);
+      const [h,m]=(settings.time||'07:00').split(':').map(Number);
+      const tgt=new Date(); tgt.setHours(h,m,0,0);
+      const lateMin=Math.round((Date.now()-tgt)/60000);
+      wakeLog.push({d:today, secs, lateMin}); if(wakeLog.length>60) wakeLog=wakeLog.slice(-60);
+    }
   }
   await persistProgress();
 
@@ -1278,23 +1434,61 @@ async function succeed(c){
   $('#successMsg').textContent = `${c.icon} ${c.name} — done.`;
   const note = firstToday ? (kept?`${who}streak extended! +${award} coins`:`${who}day 1 of a new streak · +${award} coins`) : `Already counted today — nice extra effort`;
   $('#successNote').textContent = note;
+  renderWakeStats();
   refreshStats();
   navigator.vibrate&&navigator.vibrate([60,40,60]);
   show('success');
 }
 
 /* mini calendar */
-function renderCal(){
-  const cal=$('#cal'); if(!cal) return; cal.innerHTML='';
-  const today=dayKey();
-  for(let i=34;i>=0;i--){
-    const d=new Date(); d.setDate(d.getDate()-i); const k=dayKey(d);
-    const cell=document.createElement('div'); cell.className='cell';
-    if(doneDates.includes(k)) cell.classList.add('done');
-    else if(frozenDates.includes(k)) cell.classList.add('frozen');
-    if(k===today) cell.classList.add('today');
-    cal.appendChild(cell);
+function renderWakeStats(){
+  const el=$('#successStats'); if(!el) return;
+  const now=new Date();
+  const rows=[];
+  // 1) how long it took to beat the alarm
+  if(runtime.ringStart){
+    const secs=Math.round((Date.now()-runtime.ringStart)/1000);
+    const dur = secs<60?`${secs}s`:`${Math.floor(secs/60)}m ${secs%60}s`;
+    let tag = secs<30?'⚡ lightning fast':secs<90?'solid pace':'took your time';
+    rows.push(`<div class="ws"><span>Time to get up</span><b>${dur} · ${tag}</b></div>`);
   }
+  // 2) target vs actual wake time
+  if(settings.time){
+    const [h,m]=settings.time.split(':').map(Number);
+    const target=new Date(now); target.setHours(h,m,0,0);
+    const diffMin=Math.round((now-target)/60000);
+    const actual=fmt(`${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`);
+    let line;
+    if(Math.abs(diffMin)<=120){
+      if(diffMin<=2 && diffMin>=-5) line=`up at ${actual} · right on time 🎯`;
+      else if(diffMin>2) line=`up at ${actual} · ${diffMin} min after your ${fmt(settings.time)} target`;
+      else line=`up at ${actual} · ${-diffMin} min early — nice`;
+    } else { line=`up at ${actual}`; }
+    rows.push(`<div class="ws"><span>Wake time</span><b>${line}</b></div>`);
+  }
+  // 3) snoozes
+  if(runtime.snoozeUsed>0) rows.push(`<div class="ws"><span>Snoozes used</span><b>${runtime.snoozeUsed}</b></div>`);
+  el.innerHTML=rows.join('');
+}
+function renderCal(){
+  const cal=$('#cal'); if(!cal) return;
+  const now=new Date(), y=now.getFullYear(), mo=now.getMonth();
+  const months=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const mh=$('#calMonth'); if(mh) mh.textContent=`${months[mo]} ${y}`;
+  const startDow=new Date(y,mo,1).getDay();
+  const days=new Date(y,mo+1,0).getDate();
+  const today=dayKey();
+  let html=['S','M','T','W','T','F','S'].map(d=>`<div class="cdow">${d}</div>`).join('');
+  for(let i=0;i<startDow;i++) html+=`<div class="cell empty"></div>`;
+  for(let d=1;d<=days;d++){
+    const k=dayKey(new Date(y,mo,d));
+    let cls='cell';
+    if(doneDates.includes(k)) cls+=' done'; else if(frozenDates.includes(k)) cls+=' frozen';
+    if(k===today) cls+=' today';
+    if(d>now.getDate()) cls+=' future';
+    html+=`<div class="${cls}"><span>${d}</span></div>`;
+  }
+  cal.innerHTML=html;
 }
 function renderBadges(){
   const b=$('#badges'); if(!b) return;
@@ -1303,11 +1497,25 @@ function renderBadges(){
     return `<span class="badge ${got?'got':''}" title="${bd.name} — ${bd.at}-day streak">${bd.icon}</span>`;
   }).join('');
 }
+function renderLifeStats(){
+  const el=$('#lifeStats'); if(!el) return;
+  const rows=[`<div class="ls"><b>${doneDates.length}</b><span>mornings won</span></div>`,
+              `<div class="ls"><b>${maxStreak}</b><span>best streak</span></div>`];
+  if(wakeLog.length){
+    const avgSecs=Math.round(wakeLog.reduce((a,b)=>a+(b.secs||0),0)/wakeLog.length);
+    const avg = avgSecs<60?`${avgSecs}s`:`${Math.floor(avgSecs/60)}m ${avgSecs%60}s`;
+    const onTime=Math.round(wakeLog.filter(x=>(x.lateMin||0)<=5).length/wakeLog.length*100);
+    rows.push(`<div class="ls"><b>${avg}</b><span>avg to get up</span></div>`);
+    rows.push(`<div class="ls"><b>${onTime}%</b><span>on time</span></div>`);
+  }
+  el.innerHTML=rows.join('');
+}
 function refreshStats(){
   ['#cStreak'].forEach(s=>{const e=$(s); if(e)e.textContent=streak;});
   ['#cCoins','#shopCoins','#cCoins2'].forEach(s=>{const e=$(s); if(e)e.textContent=coins;});
   ['#streakNum','#streakNum2','#streakNum3'].forEach(s=>{const e=$(s); if(e)e.textContent=streak;});
-  renderCal(); renderBadges();
+  renderCal(); renderBadges(); renderLifeStats();
+  const he=$('#homeEyebrow'); if(he) he.textContent = userName ? `let's go, ${userName}` : 'no mercy mornings';
 }
 
 /* ---------- daily deals (rotates each day, deterministic per date) ---------- */
@@ -1355,12 +1563,14 @@ function ownsItem(it){
   if(it.kind==='theme') return themesOwned.includes(it.val)?1:0;
   if(it.kind==='sun') return sunsOwned.includes(it.val)?1:0;
   if(it.kind==='unlock') return personality?1:0;
+  if(it.kind==='customsound') return customUnlocked?1:0;
   return 0;
 }
 function itemButton(it){
   const own=ownsItem(it);
   if(it.kind==='consumable') return `<button class="buybtn" data-buy="${it.id}" ${coins<it.cost?'disabled':''}>🪙 ${it.cost}</button>`;
   if(it.kind==='perk'||it.kind==='unlock') return own?`<span class="owned">Owned</span>`:`<button class="buybtn" data-buy="${it.id}" ${coins<it.cost?'disabled':''}>🪙 ${it.cost}</button>`;
+  if(it.kind==='customsound') return own?`<button class="buybtn equip" data-preview="${it.id}">Set up</button>`:`<button class="buybtn" data-buy="${it.id}" ${coins<it.cost?'disabled':''}>🪙 ${it.cost}</button>`;
   if(it.kind==='theme'){ const eq=equipTheme===it.val; if(eq) return `<span class="owned">Equipped</span>`;
     return own?`<button class="buybtn equip" data-equip="theme:${it.val}">Equip</button>`:`<button class="buybtn" data-buy="${it.id}" ${coins<it.cost?'disabled':''}>🪙 ${it.cost}</button>`; }
   if(it.kind==='sun'){ const eq=equipSun===it.val; if(eq) return `<span class="owned">Equipped</span>`;
@@ -1420,15 +1630,29 @@ function openPreview(id){
   if(it.kind==='theme'){
     html=`<h3>${it.name}</h3>${mockHTML(THEMES[it.val], equipSun)}<p>Here's your home screen in this sky.</p>`;
   } else if(it.kind==='sun'){
-    html=`<h3>${it.name}</h3>${mockHTML(THEMES[equipTheme]||THEMES.default, it.val)}<p>This is the orb you'll wake up to.</p>`;
+    html=`<h3>${it.name}</h3>${mockHTML(THEMES[equipTheme]||THEMES.default, it.val)}<p>This is the orb you'll wake up to.</p>
+      <button class="modalbtn alt" id="previewSound">🔊 Hear its alarm sound</button>`;
   } else if(it.kind==='unlock'){
     html=`<h3>${it.icon} ${it.name}</h3><div class="previewGlyph" style="margin:14px 0">🔤</div>
       <p>Adds sassier wake-up lines like “Nice try bed, you almost had me” — and lets Daybreak greet you by name.</p>`;
+  } else if(it.kind==='customsound'){
+    if(owns){
+      html=`<h3>${it.icon} ${it.name}</h3>
+        <p>${customSoundURL?'A clip is loaded. Replace it, test it, or toggle it on/off.':'Pick a short audio clip (under ~1MB). It becomes your alarm tone when turned on.'}</p>
+        <label class="modalbtn alt" for="customFile" style="display:block">📁 ${customSoundURL?'Replace clip':'Choose a clip'}</label>
+        <input id="customFile" type="file" accept="audio/*" style="display:none" />
+        <button class="modalbtn alt" id="customTest" ${customSoundURL?'':'disabled'}>🔊 Test clip</button>
+        <button class="modalbtn" id="customToggle" ${customSoundURL?'':'disabled'}>${useCustomSound?'✓ Using custom sound — tap to turn off':'Use as my alarm'}</button>
+        <p style="font-size:11px;margin-top:10px">Stored on this device only. On iPhone the ring switch must be on to hear it.</p>`;
+    } else {
+      html=`<h3>${it.icon} ${it.name}</h3><div class="previewGlyph" style="margin:14px 0">🎙️</div><p>${it.desc}</p>`;
+    }
   } else {
     html=`<h3>${it.icon} ${it.name}</h3><div class="previewGlyph" style="margin:14px 0">${it.icon}</div><p>${it.desc}</p>`;
   }
   // action inside the modal
-  if(!owns && it.kind!=='theme' && it.kind!=='sun') html+=`<button class="modalbtn" id="previewBuy" ${coins<it.cost?'disabled':''}>${coins<it.cost?'Need more coins':'Buy 🪙 '+it.cost}</button>`;
+  if(!owns && it.kind!=='theme' && it.kind!=='sun' && it.kind!=='customsound') html+=`<button class="modalbtn" id="previewBuy" ${coins<it.cost?'disabled':''}>${coins<it.cost?'Need more coins':'Buy 🪙 '+it.cost}</button>`;
+  else if(it.kind==='customsound' && !owns) html+=`<button class="modalbtn" id="previewBuy" ${coins<it.cost?'disabled':''}>${coins<it.cost?'Need more coins':'Buy 🪙 '+it.cost}</button>`;
   else if(it.kind==='theme'||it.kind==='sun'){
     const equipped = (it.kind==='theme'?equipTheme===it.val:equipSun===it.val);
     if(equipped) html+=`<button class="modalbtn" disabled>Equipped</button>`;
@@ -1439,6 +1663,21 @@ function openPreview(id){
   $('#previewModal').classList.add('show');
   const pb=$('#previewBuy'); if(pb) pb.onclick=async()=>{ await buyItem(it.id); closePreview(); };
   const pe=$('#previewEquip'); if(pe) pe.onclick=()=>{ equipItem(`${it.kind}:${it.val}`); closePreview(); };
+  const ps=$('#previewSound'); if(ps) ps.onclick=(e)=>{ e.stopPropagation(); playSkinSound(it.val); };
+  const cf=$('#customFile'); if(cf) cf.onchange=onCustomFile;
+  const ct=$('#customTest'); if(ct) ct.onclick=(e)=>{ e.stopPropagation(); playSkinSound('__custom'); };
+  const cg=$('#customToggle'); if(cg) cg.onclick=async()=>{ if(!customSoundURL) return; useCustomSound=!useCustomSound; await persistProgress(); toast(useCustomSound?'Custom sound on 🔊':'Back to skin sound'); openPreview('customsound'); };
+}
+function onCustomFile(e){
+  const f=e.target.files&&e.target.files[0]; if(!f) return;
+  if(!/^audio\//.test(f.type||'')){ toast('Pick an audio file'); return; }
+  if(f.size>1024*1024){ toast('Too big — keep it under 1 MB'); return; }
+  const r=new FileReader();
+  r.onload=async()=>{ customSoundURL=String(r.result||''); customAudioEl=null; useCustomSound=true;
+    await save('customSound',customSoundURL); await persistProgress();
+    toast('Clip saved & turned on 🔊'); openPreview('customsound'); };
+  r.onerror=()=>toast('Could not read that file');
+  r.readAsDataURL(f);
 }
 function closePreview(){ $('#previewModal').classList.remove('show'); }
 async function buyItem(id, priceOverride){
@@ -1449,6 +1688,7 @@ async function buyItem(id, priceOverride){
   if(it.kind==='consumable'){ if(id==='freeze')freezes++; else if(id==='snooze')snoozeTokens++; else easyPasses++; }
   else if(it.kind==='perk') insurance=true;
   else if(it.kind==='unlock'){ personality=true; }
+  else if(it.kind==='customsound'){ customUnlocked=true; }
   else if(it.kind==='theme'){ if(!themesOwned.includes(it.val))themesOwned.push(it.val); applyTheme(it.val); }
   else if(it.kind==='sun'){ if(!sunsOwned.includes(it.val))sunsOwned.push(it.val); applySun(it.val); }
   await persistProgress(); refreshStats(); renderShop();
@@ -1496,6 +1736,13 @@ async function init(){
   userName     = await load('userName','')||'';
   prestige     = await load('prestige',0)||0;
   maxStreak    = await load('maxStreak',0)||0;
+  onboarded    = await load('onboarded',false)||false;
+  customUnlocked = await load('customUnlocked',false)||false;
+  useCustomSound = await load('useCustomSound',false)||false;
+  customSoundURL = await load('customSound','')||'';
+  wakeLog      = await load('wakeLog',[])||[];
+  workoutDate  = await load('workoutDate','')||'';
+  workoutEarned= await load('workoutEarned',0)||0;
   doneDates  = await load('doneDates', [])||[];
   frozenDates= await load('frozenDates', [])||[];
   lastDone   = await load('lastDone', null);
@@ -1543,6 +1790,7 @@ async function init(){
 
   $('#armBtn').onclick=arm;
   $('#testBtn').onclick=()=>{ settings.time=$('#alarmTime').value; ring(); };
+  $('#workoutBtn').onclick=startWorkout;
   $('#disarmBtn').onclick=()=>{ clearInterval(runtime.ringTimer); show('setup'); };
   $('#dismissBtn').onclick=startChallenge;
   $('#easyBtn').onclick=useEasyPass;
@@ -1556,9 +1804,20 @@ async function init(){
   // tapping the ringing orb just (re)starts audio if browser blocked it — does NOT dismiss
   $('#s-ringing .orb').onclick=()=>{ if(!audioOn) startAlarm(); };
 
-  // shortcut entry: ?ring=1 boots straight into the alarm
+  // onboarding submit
+  renderSunInto($('#onboardOrb'),'default');
+  $('#obStart').onclick=async()=>{
+    const nm=$('#obName').value.trim().slice(0,16); if(nm) userName=nm;
+    settings.time=$('#obTime').value||'07:00'; $('#alarmTime').value=settings.time;
+    onboarded=true;
+    await save('settings',settings); await save('userName',userName); await save('onboarded',true);
+    refreshStats(); show('setup');
+  };
+
+  // first screen: alarm via shortcut wins; else first-run onboarding; else home
   const params=new URLSearchParams(location.search);
   if(params.get('ring')==='1' || location.hash==='#ring'){ ring(); }
+  else if(!onboarded){ show('onboard'); }
 }
 init();
 </script>
