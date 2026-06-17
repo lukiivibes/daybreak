@@ -244,6 +244,32 @@
   .wmGrid input:focus,.wmTotalRow input:focus{outline:none;border-color:var(--coral)}
   .wmOr{text-align:center;font-size:11px;color:var(--dim);margin:11px 0}
   .wmTotalRow{margin-top:2px}
+  /* ---- Sleep screen ---- */
+  .imported{background:rgba(84,224,168,.14);border:1px solid rgba(84,224,168,.4);color:var(--mint);border-radius:14px;padding:12px 14px;font-weight:700;font-size:14px;margin-bottom:14px}
+  .imported.warn{background:rgba(255,194,75,.12);border-color:rgba(255,194,75,.4);color:var(--gold)}
+  .imported small{display:block;color:var(--dim);font-weight:500;font-size:11.5px;margin-top:5px;line-height:1.45}
+  #sleepBody .card{margin-bottom:14px}
+  .cardh{font-family:var(--display);font-weight:700;font-size:15px;color:var(--cream);margin-bottom:12px}
+  #sleepBody .wcBody{display:flex;align-items:center;gap:15px}
+  #sleepBody .wcMeta{font-size:12.5px;color:var(--dim);line-height:1.45}
+  #sleepBody .wcMeta b{color:var(--cream);font-size:15px}
+  .estbig{font-size:15px;color:var(--cream)}
+  .emptys{font-size:13.5px;color:var(--dim);line-height:1.5}
+  .sleepavg{font-size:12.5px;color:var(--dim);margin-top:10px;text-align:center}
+  .sleepavg b{color:var(--cream)}
+  .verdict{font-size:13.5px;font-weight:600;margin:10px auto 2px;max-width:320px;line-height:1.45;min-height:1px}
+  .verdict.checking{color:var(--gold)}
+  .verdict.pass{color:var(--mint)}
+  .verdict.fail{color:var(--coral)}
+  .verdict small{display:block;color:var(--dim);font-weight:500;font-size:11px;margin-top:3px}
+  /* ---- intro tour ---- */
+  .tourIc{font-size:56px;text-align:center;margin-bottom:12px;line-height:1}
+  .tourT{font-family:var(--display);font-weight:800;font-size:27px;text-align:center;color:var(--cream);line-height:1.08}
+  .tourB{font-size:15px;color:var(--dim);line-height:1.55;text-align:center;margin-top:13px}
+  .tourB b{color:var(--cream);font-weight:600}
+  .tdots{display:flex;gap:7px;justify-content:center;margin:22px 0 4px}
+  .tdot{width:7px;height:7px;border-radius:50%;background:rgba(255,244,230,.2);transition:all .25s}
+  .tdot.on{background:var(--gold);width:20px;border-radius:4px}
   .lifestats{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:14px}
   .ls{background:rgba(255,244,230,.05);border:1px solid var(--line);border-radius:12px;padding:10px 12px;text-align:center}
   .ls b{font-family:var(--display);font-weight:800;font-size:20px;display:block;line-height:1}
@@ -438,6 +464,13 @@
     </div>
   </section>
 
+  <!-- ========== TOUR (first-run explainer) ========== -->
+  <section id="s-tour" class="screen">
+    <div class="orbwrap" style="justify-content:flex-start;padding-top:7vh">
+      <div id="tourBody" style="width:100%;max-width:380px"></div>
+    </div>
+  </section>
+
   <!-- ========== SETUP ========== -->
   <section id="s-setup" class="screen active">
     <div class="topbar">
@@ -510,6 +543,8 @@
     <button class="btn ghost" id="armBtn" style="margin-top:10px">Arm alarm only</button>
     <button class="btn ghost" id="testBtn" style="margin-top:10px">Test it now →</button>
     <button class="btn ghost" id="workoutBtn" style="margin-top:10px">💪 Workout for coins (3–5 each)</button>
+    <button class="btn ghost" id="sleepStatsBtn" style="margin-top:10px">🌙 Sleep stats &amp; history →</button>
+    <button class="btn ghost" id="helpBtn" style="margin-top:10px">❓ How Daybreak works</button>
 
     <details class="logWatch" id="logWatch">
       <summary>⌚ Log last night's Apple Watch sleep</summary>
@@ -612,7 +647,21 @@
       </div>
     </div>
   </section>
-  <!-- ========== SHOP ========== -->
+  <!-- ========== SLEEP ========== -->
+  <section id="s-sleep" class="screen">
+    <div class="topbar">
+      <div class="brand"><span class="dot"></span>sleep</div>
+      <div class="streak">🌙</div>
+    </div>
+    <div class="hero" style="margin:18px 0 4px">
+      <div class="eyebrow">how you've been resting</div>
+      <div class="h1" style="font-size:clamp(28px,9vw,40px)">Your Sleep</div>
+    </div>
+    <div id="sleepBody"></div>
+    <div class="spacer"></div>
+    <button class="btn ghost" id="sleepBack" style="margin-top:14px">← Back</button>
+  </section>
+
   <section id="s-shop" class="screen">
     <div class="topbar">
       <div class="brand"><span class="dot"></span>sun shop</div>
@@ -656,7 +705,25 @@ const CHALLENGES = [
   {id:'memory',  icon:'🧠', name:'Memory game',req:'none',  type:'memory',prompt:()=>'Watch, then repeat', sub:'Simon says. Get to a 5-long streak.'},
   {id:'type',    icon:'⌨️', name:'Type it out',req:'none',  type:'type',  prompt:()=>'Type it word for word', sub:'No copy-paste. Nail it exactly to wake up.'},
 ];
-const OBJECTS = ['the kitchen sink','a clean spoon','the fridge','your toothbrush','a houseplant','the front door','a roll of paper towels','a coffee mug','a cereal box','the bathroom mirror','a pair of shoes','the microwave'];
+const OBJECTS = [
+  {name:'a spoon', classes:['spoon']},
+  {name:'the refrigerator', classes:['refrigerator']},
+  {name:'your toothbrush', classes:['toothbrush']},
+  {name:'a houseplant', classes:['potted plant']},
+  {name:'a cup or mug', classes:['cup']},
+  {name:'the microwave or oven', classes:['microwave','oven']},
+  {name:'a bowl', classes:['bowl']},
+  {name:'a water bottle', classes:['bottle']},
+  {name:'a book', classes:['book']},
+  {name:'a clock', classes:['clock']},
+  {name:'a chair', classes:['chair']},
+];
+// which detected objects satisfy each photo challenge (COCO-SSD class names)
+const ACCEPT = {
+  bed:['bed'],
+  splash:['sink'],
+  breakfast:['bowl','cup','banana','apple','sandwich','orange','broccoli','carrot','donut','cake','pizza','hot dog','fork','knife','spoon','wine glass','dining table','bottle'],
+};
 
 const mem = {}; // last-resort fallback
 const hasWS = !!(window.storage && window.storage.get);
@@ -678,7 +745,7 @@ let snoozeTokens = 0, easyPasses = 0, insurance = false;
 let themesOwned = ['default'], sunsOwned = ['default'];
 let equipTheme = 'default', equipSun = 'default';
 let personality = false, userName = '';
-let prestige = 0, maxStreak = 0, onboarded = false;
+let prestige = 0, maxStreak = 0, onboarded = false, tourSeen = false;
 let wakeLog = [];                 // [{d, secs, lateMin}] recent mornings for stats
 let workoutDate = '', workoutEarned = 0;   // daily coin-earning cap for workouts
 let sleepStart = null;            // timestamp set when you tap "going to sleep"
@@ -702,7 +769,7 @@ let runtime = {snoozeUsed:0, snoozeMins:[5,3,1], active:null, ringTimer:null};
 
 /* ===================== helpers ===================== */
 const $ = s=>document.querySelector(s);
-const screens = ['onboard','setup','armed','ringing','math','challenge','success','shop'];
+const screens = ['onboard','tour','setup','armed','ringing','math','challenge','success','shop','sleep'];
 function show(name){
   screens.forEach(s=>$('#s-'+s).classList.toggle('active', s===name));
 }
@@ -1031,10 +1098,8 @@ function saveWatchManual(){
   toast('Logged from Apple Watch ⌚');
 }
 function fmtDur(mins){ mins=Math.round(mins||0); const h=Math.floor(mins/60), m=mins%60; return h?`${h}h ${m}m`:`${m}m`; }
-function renderWatchCard(){
-  const el=$('#watchCard'); if(!el) return;
-  if(!watchSleep){ el.style.display='none'; return; }
-  const w=watchSleep, asleep=w.asleep||0;
+function watchBreakdownHTML(w){
+  const asleep=w.asleep||0;
   const score=scoreSleep(asleep);
   const col = score>=85?'var(--mint)':score>=65?'var(--gold)':'var(--coral)';
   const segs=[ ['Deep',w.deep,'#5b6bff'], ['Core',w.core,'#54E0A8'], ['REM',w.rem,'#FF6B4A'], ['Awake',w.awake,'#5a5570'] ];
@@ -1045,16 +1110,51 @@ function renderWatchCard(){
     bar = segs.filter(s=>s[1]).map(s=>`<i style="width:${(s[1]/total*100).toFixed(1)}%;background:${s[2]}"></i>`).join('');
     legend = segs.filter(s=>s[1]!=null).map(s=>`<span><b style="background:${s[2]}"></b>${s[0]} ${fmtDur(s[1])}</span>`).join('');
   }
-  const dr = (w.deep!=null&&w.rem!=null) ? `Deep + REM made up ${Math.round((w.deep+w.rem)/asleep*100)}% of your sleep — that's the restorative stuff.` : '';
-  const when = (w.d===dayKey())?'Last night':keyToDate(w.d).toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric'});
-  el.style.display='block';
-  el.innerHTML=`<div class="wcTop"><div class="wcTitle">⌚ ${when} · Apple Watch</div><button class="wcX" id="wcDismiss" aria-label="dismiss">✕</button></div>
-    <div class="wcBody">
+  const dr = (w.deep!=null&&w.rem!=null&&asleep) ? `Deep + REM were ${Math.round((w.deep+w.rem)/asleep*100)}% of your sleep — that's the restorative stuff.` : '';
+  return `<div class="wcBody">
       <div class="scoreRing" style="--col:${col};--pct:${score}"><div class="scoreNum">${score}</div><div class="scoreCap">sleep score</div></div>
       <div class="wcMeta"><b>${fmtDur(asleep)}</b> asleep${w.inbed?` · ${fmtDur(w.inbed)} in bed`:''}<br><span>${dr||scoreTip(score,asleep)}</span></div>
     </div>
     ${hasStages?`<div class="wcBar">${bar}</div><div class="wcLegend">${legend}</div>`:''}`;
+}
+function renderWatchCard(){
+  const el=$('#watchCard'); if(!el) return;
+  if(!watchSleep){ el.style.display='none'; return; }
+  const when = (watchSleep.d===dayKey())?'Last night':keyToDate(watchSleep.d).toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric'});
+  el.style.display='block';
+  el.innerHTML=`<div class="wcTop"><div class="wcTitle">⌚ ${when} · Apple Watch</div><button class="wcX" id="wcDismiss" aria-label="dismiss">✕</button></div>${watchBreakdownHTML(watchSleep)}`;
   const x=$('#wcDismiss'); if(x) x.onclick=()=>{ el.style.display='none'; };
+}
+function hasSleepParams(params){
+  const q=params||new URLSearchParams(location.search);
+  return ['asleep','inbed','deep','rem','core','light','awake'].some(k=>q.get(k)!=null);
+}
+// Dedicated Sleep section. status: 'ok' (just imported), 'empty' (import carried no minutes), or null (opened normally)
+function renderSleepScreen(status){
+  const el=$('#sleepBody'); if(!el) return;
+  const todayKey=dayKey();
+  let html='';
+  if(status==='ok'){ html+=`<div class="imported">⌚ Sleep data imported ✓</div>`; toast('⌚ Sleep imported ✓'); }
+  else if(status==='empty'){ html+=`<div class="imported warn">⌚ Daybreak opened, but no sleep minutes came through.<br><small>Your Shortcut probably isn't adding up the minutes yet — check the “Set Variable Total” step is inside the loop.</small></div>`; }
+  if(watchSleep){
+    const when = watchSleep.d===todayKey?'Last night':keyToDate(watchSleep.d).toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric'});
+    html+=`<div class="card"><div class="cardh">${when} · Apple Watch ⌚</div>${watchBreakdownHTML(watchSleep)}</div>`;
+  } else {
+    const est=sleepLog.find(x=>x.d===todayKey);
+    if(est){ html+=`<div class="card"><div class="cardh">Last night (estimate)</div><div class="estbig">${fmtDur(est.mins)} asleep · score <b>${est.score}</b></div></div>`; }
+    else { html+=`<div class="card"><div class="emptys">No sleep logged yet.<br>Tap <b>🌙 Going to sleep</b> at bedtime, or log your Apple Watch numbers below.</div></div>`; }
+  }
+  if(sleepLog.length){
+    const sl=sleepLog.slice(-10);
+    const bars=sl.map(x=>{ const dt=keyToDate(x.d); const c=x.score>=85?'var(--mint)':x.score>=65?'var(--gold)':'var(--coral)';
+      const tag=x.src==='watch'?'⌚':'';
+      return `<div class="barwrap"><div class="barval">${x.score}</div><div class="bar" style="height:${Math.max(6,x.score)}%;background:${c}"></div><div class="barlbl">${dt.getMonth()+1}/${dt.getDate()}${tag}</div></div>`; }).join('');
+    const avg=Math.round(sleepLog.reduce((a,b)=>a+(b.score||0),0)/sleepLog.length);
+    html+=`<div class="card"><div class="cardh">Sleep score history</div><div class="bars">${bars}</div><div class="sleepavg">Average <b>${avg}</b> · ${sleepLog.length} night${sleepLog.length>1?'s':''} tracked</div></div>`;
+  }
+  html+=`<button class="btn ghost" id="sleepLogBtn">⌚ Log Apple Watch sleep</button>`;
+  el.innerHTML=html;
+  const lb=$('#sleepLogBtn'); if(lb) lb.onclick=()=>{ show('setup'); const d=$('#logWatch'); if(d){ d.open=true; d.scrollIntoView({behavior:'smooth'}); } };
 }
 function scheduleTick(){
   clearInterval(runtime.ringTimer);
@@ -1325,7 +1425,6 @@ async function poseChallenge(c){
   const v=$('#cam'), cv=$('#poseCv'), ctx=cv.getContext('2d');
   const mode = c.pose || 'pushup';
   let count=0, st='up', lastRep=0, running=true, lastInfer=0;
-  runtime._pose={ stop:()=>{ running=false; try{detector.dispose&&detector.dispose();}catch(e){} } };
 
   function ang(a,b,d){ const ab=[a.x-b.x,a.y-b.y], cb=[d.x-b.x,d.y-b.y];
     const dot=ab[0]*cb[0]+ab[1]*cb[1]; const m=(Math.hypot(ab[0],ab[1])*Math.hypot(cb[0],cb[1]))||1;
@@ -1363,39 +1462,58 @@ async function poseChallenge(c){
     }
     return false;
   }
-  async function loop(ts){
+  function handle(kp, now){
     if(!running) return;
-    if(!lastInfer || ts-lastInfer>70){            // ~14 fps — smooth enough, easy on battery
-      lastInfer=ts;
-      let poses=[];
-      try{ poses=await detector.estimatePoses(v,{flipHorizontal:false}); }catch(e){}
-      if(poses && poses[0]){
-        const kp=poses[0].keypoints; draw(kp); const now=Date.now();
-        if(mode==='situp'){
-          // count crunches via the hip angle (shoulder-hip-knee): lying flat = open, crunched = closed
-          const hip=avgAngle(kp,[5,11,13],[6,12,14]);
-          if(hip===null){ $('#poseHint').textContent='Can\'t see your torso — lie side-on, fully in frame.'; }
-          else {
-            if(st==='up' && hip>115){ st='down'; $('#poseHint').textContent='Now crunch all the way up'; }
-            else if(st==='down' && hip<70 && now-lastRep>500){ st='up'; if(bank())return; }
-          }
-        } else {
-          // push-ups via elbow angle + a straight-body form gate
-          const elbow=avgAngle(kp,[5,7,9],[6,8,10]);
-          if(elbow===null){ $('#poseHint').textContent='Can\'t see your arms — back up so your whole body is in frame.'; }
-          else {
-            if(st==='up' && elbow<100){ st='down'; $('#poseHint').textContent='Down… now push back up'; }
-            else if(st==='down' && elbow>150 && now-lastRep>500){
-              if(!bodyStraight(kp)){ $('#poseHint').textContent='Straighten up — full push-ups only (no knees/piking)'; }
-              else { st='up'; if(bank())return; }
-            }
-          }
+    draw(kp);
+    if(mode==='situp'){
+      const hip=avgAngle(kp,[5,11,13],[6,12,14]);   // lying flat = open, crunched = closed
+      if(hip===null){ $('#poseHint').textContent="Can't see your torso — lie side-on, fully in frame."; }
+      else {
+        if(st==='up' && hip>115){ st='down'; $('#poseHint').textContent='Now crunch all the way up'; }
+        else if(st==='down' && hip<70 && now-lastRep>500){ st='up'; if(bank())return; }
+      }
+    } else {
+      const elbow=avgAngle(kp,[5,7,9],[6,8,10]);
+      if(elbow===null){ $('#poseHint').textContent="Can't see your arms — back up so your whole body is in frame."; }
+      else {
+        if(st==='up' && elbow<100){ st='down'; $('#poseHint').textContent='Down… now push back up'; }
+        else if(st==='down' && elbow>150 && now-lastRep>500){
+          if(!bodyStraight(kp)){ $('#poseHint').textContent='Straighten up — full push-ups only (no knees/piking)'; }
+          else { st='up'; if(bank())return; }
         }
       }
     }
-    requestAnimationFrame(loop);
   }
-  requestAnimationFrame(loop);
+  // Robust loop: inference runs fire-and-forget with a watchdog, so a slow/stalled/erroring
+  // frame can NEVER stop the redraw cycle (this was the "detects once then freezes" bug).
+  let inferring=false, inferStart=0, lastGood=0, warnedStall=false, raf=0;
+  function loop(){
+    if(!running) return;
+    const now=Date.now();
+    const ready = v.readyState>=2 && (v.videoWidth>0);
+    if(ready){
+      if(inferring && now-inferStart>2500) inferring=false;          // watchdog frees a hung inference
+      if(!inferring && now-lastInfer>66){                            // ~15fps
+        inferring=true; inferStart=now; lastInfer=now;
+        detector.estimatePoses(v,{flipHorizontal:false})
+          .then(p=>{ if(p&&p[0]){ lastGood=Date.now(); handle(p[0].keypoints, lastGood); } })
+          .catch(()=>{})
+          .finally(()=>{ inferring=false; });
+      }
+      if(lastGood && now-lastGood>4500 && !warnedStall){ warnedStall=true; $('#poseHint').textContent='Lost you — get your whole body lit and in frame (or tap an escape button below).'; }
+      if(lastGood && now-lastGood<3000) warnedStall=false;
+    } else {
+      $('#poseHint').textContent='Getting the camera ready…';
+    }
+    raf=requestAnimationFrame(loop);
+  }
+  runtime._pose={ stop:()=>{ running=false; cancelAnimationFrame(raf); try{detector.dispose&&detector.dispose();}catch(e){} } };
+  // start as soon as the camera truly has frames; don't block on it
+  if(v.readyState>=2 && v.videoWidth>0) loop();
+  else {
+    v.addEventListener('loadeddata', ()=>{ if(running && !raf) loop(); }, {once:true});
+    setTimeout(()=>{ if(running && !raf) loop(); }, 1200);   // safety: start anyway; the ready-gate handles a cold video
+  }
 }
 
 /* --- tap the sun (no sensors, also the camera fallback) --- */
@@ -1544,19 +1662,62 @@ function memoryChallenge(c){
   newRound();
 }
 
+/* lazy COCO-SSD object detector for verifying photo challenges (on-device, no server) */
+let cocoLibPromise=null, cocoModel=null;
+function ensureCocoLib(){
+  if(cocoModel) return Promise.resolve(true);
+  if(!cocoLibPromise){
+    cocoLibPromise=(async()=>{
+      if(!window.tf) await loadScript('https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.20.0/dist/tf.min.js');
+      if(!window.cocoSsd) await loadScript('https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.3/dist/coco-ssd.min.js');
+      try{ await window.tf.ready(); }catch(e){}
+      cocoModel = await window.cocoSsd.load({base:'lite_mobilenet_v2'});
+      return !!cocoModel;
+    })().catch(()=>{ cocoLibPromise=null; return false; });
+  }
+  return cocoLibPromise;
+}
+function greenFraction(cv){
+  const ctx=cv.getContext('2d'); let d;
+  try{ d=ctx.getImageData(0,0,cv.width,cv.height).data; }catch(e){ return 0; }
+  let g=0,n=0;
+  for(let i=0;i<d.length;i+=40){ const r=d[i],gr=d[i+1],b=d[i+2]; n++; if(gr>55 && gr>r*1.12 && gr>b*1.12) g++; }
+  return n?g/n:0;
+}
+// returns {pass:true|false|null, labels:[...], msg}. pass:null means the checker couldn't run.
+async function verifyCapture(c, cv, obj){
+  if(c.id==='grass'){
+    const f=greenFraction(cv);
+    return f>=0.22 ? {pass:true, labels:[`${Math.round(f*100)}% greenery`]}
+                   : {pass:false, labels:[`only ${Math.round(f*100)}% green`], msg:"That doesn't look like grass or plants — point at real greenery or leaves."};
+  }
+  const ok=await ensureCocoLib();
+  if(!ok || !cocoModel) return {pass:null};
+  let preds=[];
+  try{ preds=await cocoModel.detect(cv, 10); }catch(e){ return {pass:null}; }
+  const uniq=[...new Set(preds.filter(p=>p.score>0.4).map(p=>p.class))];
+  const accept = (c.id==='object' && obj) ? obj.classes : (ACCEPT[c.id]||[]);
+  const hit = uniq.some(f=>accept.includes(f));
+  if(hit) return {pass:true, labels:uniq.slice(0,4)};
+  const want = (c.id==='object'&&obj)?obj.name:(c.id==='bed'?'a bed':c.id==='splash'?'a sink':'food / a plate');
+  return {pass:false, labels:uniq.slice(0,4), msg:`I don't see ${want} in that shot — point the camera right at it and retake.`};
+}
+
 async function cameraChallenge(c){
-  const obj = c.id==='object' ? OBJECTS[Math.floor(Math.random()*OBJECTS.length)] : '';
+  const obj = c.id==='object' ? OBJECTS[Math.floor(Math.random()*OBJECTS.length)] : null;
+  const promptArg = c.id==='object' ? obj.name : '';
+  let fails=0;
   const body=$('#challengeBody');
   body.innerHTML=`
-    <div class="ringlabel">proof required</div>
-    <div class="prompt">${c.prompt(obj)}</div>
+    <div class="ringlabel">proof required · AI-checked</div>
+    <div class="prompt">${c.prompt(promptArg)}</div>
     <div class="promptsub">${c.sub}</div>
     <video id="cam" autoplay playsinline muted></video>
     <img class="shot hidden" id="shot"/>
+    <div class="verdict" id="verdict"></div>
     <div class="stack">
       <button class="btn" id="snap">📸 Capture proof</button>
       <button class="btn" id="retake" hidden>Retake</button>
-      <button class="btn" id="accept" hidden>This counts — wake up</button>
       <button class="tinybtn" id="bail2">switch challenge</button>
       <button class="tinybtn" id="noCam" style="color:var(--coral)">📷 camera not working? do a no-camera one</button>
     </div>`;
@@ -1565,34 +1726,50 @@ async function cameraChallenge(c){
   $('#noCam').onclick=()=>{ stopCam(); tapChallenge(CHALLENGES.find(x=>x.id==='tap'), 'No camera — tap your way out instead'); };
 
   try{
-    const facing = (c.id==='object'||c.id==='grass'||c.id==='breakfast') ? 'environment' : 'user';
-    stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:facing}});
+    stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}});
     $('#cam').srcObject=stream;
+    await ($('#cam').play&&$('#cam').play().catch(()=>{}));
   }catch(e){
-    // camera blocked/denied/unavailable -> fall back to tap-the-sun, credited honestly
     tapChallenge(CHALLENGES.find(x=>x.id==='tap'), "Camera's off — tap your way out instead");
     return;
   }
+  // warm up the detector in the background so the first check is fast (skip for the grass heuristic)
+  if(c.id!=='grass') ensureCocoLib();
 
-  $('#snap').onclick=()=>{
+  const toMath=(why)=>{ stopCam(); toast(why); mathChallenge(CHALLENGES.find(x=>x.id==='math')); };
+
+  $('#snap').onclick=async()=>{
     const v=$('#cam'); const cv=document.createElement('canvas');
     cv.width=v.videoWidth||480; cv.height=v.videoHeight||640;
-    const ctx=cv.getContext('2d'); ctx.drawImage(v,0,0,cv.width,cv.height);
-    // brightness check for "go outside"
-    if(c.bright){
-      const d=ctx.getImageData(0,0,cv.width,cv.height).data; let sum=0;
-      for(let i=0;i<d.length;i+=40){ sum+=(d[i]+d[i+1]+d[i+2]); }
-      const avg=sum/(d.length/40)/3;
-      if(avg<55){ toast('Too dark — are you actually outside? Try again.'); return; }
-    }
+    cv.getContext('2d').drawImage(v,0,0,cv.width,cv.height);
     $('#shot').src=cv.toDataURL('image/jpeg',.8);
     $('#shot').classList.remove('hidden'); v.classList.add('hidden');
-    $('#snap').hidden=true; $('#retake').hidden=false; $('#accept').hidden=false;
-    setDawn(.6);
+    $('#snap').hidden=true;
+    const vd=$('#verdict'); vd.className='verdict checking'; vd.textContent='🔍 Checking your photo…';
+
+    let res;
+    try{ res=await Promise.race([ verifyCapture(c,cv,obj), new Promise(r=>setTimeout(()=>r({pass:null,timeout:true}),15000)) ]); }
+    catch(e){ res={pass:null}; }
+
+    if(res.pass===true){
+      vd.className='verdict pass'; vd.textContent=`✓ Verified${res.labels&&res.labels.length?` · saw ${res.labels.join(', ')}`:''}`;
+      setDawn(1); navigator.vibrate&&navigator.vibrate([60,40,60]);
+      setTimeout(()=>{ stopCam(); succeed(c); }, 650);
+      return;
+    }
+    if(res.pass===null){
+      return toMath(res.timeout?'Photo checker took too long — quick math instead':"Couldn't run the photo checker — quick math instead");
+    }
+    // failed verification
+    fails++;
+    vd.className='verdict fail';
+    vd.innerHTML=`✗ ${res.msg||'That doesn’t match.'}${res.labels&&res.labels.length?`<br><small>I saw: ${res.labels.join(', ')}</small>`:''}`;
+    setDawn(0);
+    if(fails>=3){ return toMath('No worries — quick math one instead'); }
+    $('#retake').hidden=false;
   };
   $('#retake').onclick=()=>{ $('#shot').classList.add('hidden'); $('#cam').classList.remove('hidden');
-    $('#snap').hidden=false; $('#retake').hidden=true; $('#accept').hidden=true; setDawn(0); };
-  $('#accept').onclick=()=>{ stopCam(); succeed(c); };
+    $('#snap').hidden=false; $('#retake').hidden=true; $('#verdict').textContent=''; $('#verdict').className='verdict'; setDawn(0); };
 }
 function stopCam(){ if(stream){ stream.getTracks().forEach(t=>t.stop()); stream=null; } }
 
@@ -1900,6 +2077,7 @@ function renderCharts(){
   }
 }
 function refreshStats(){
+  if(typeof renderWatchCard==='function') renderWatchCard();
   ['#cStreak'].forEach(s=>{const e=$(s); if(e)e.textContent=streak;});
   ['#cCoins','#shopCoins','#cCoins2'].forEach(s=>{const e=$(s); if(e)e.textContent=coins;});
   ['#streakNum','#streakNum2','#streakNum3'].forEach(s=>{const e=$(s); if(e)e.textContent=streak;});
@@ -2126,6 +2304,7 @@ async function init(){
   prestige     = await load('prestige',0)||0;
   maxStreak    = await load('maxStreak',0)||0;
   onboarded    = await load('onboarded',false)||false;
+  tourSeen     = await load('tourSeen',false)||false;
   customUnlocked = await load('customUnlocked',false)||false;
   useCustomSound = await load('useCustomSound',false)||false;
   customSoundURL = await load('customSound','')||'';
@@ -2190,6 +2369,9 @@ async function init(){
   if($('#wmSave')) $('#wmSave').onclick=saveWatchManual;
   $('#testBtn').onclick=()=>{ settings.time=$('#alarmTime').value; runtime.test=true; ring(); };
   $('#workoutBtn').onclick=startWorkout;
+  if($('#sleepStatsBtn')) $('#sleepStatsBtn').onclick=()=>{ renderSleepScreen(null); show('sleep'); };
+  if($('#sleepBack')) $('#sleepBack').onclick=()=>show('setup');
+  if($('#helpBtn')) $('#helpBtn').onclick=()=>startTour('setup');
   $('#disarmBtn').onclick=()=>{ clearInterval(runtime.ringTimer); sleepStart=null; save('sleepStart',null); stopNoise(); exitNight(); show('setup'); };
   $('#dismissBtn').onclick=startChallenge;
   $('#easyBtn').onclick=useEasyPass;
@@ -2208,12 +2390,15 @@ async function init(){
   // onboarding Q&A
   renderSunInto($('#onboardOrb'),'default');
 
-  // first screen: alarm via shortcut wins; else watch-sleep import; else first-run onboarding; else home
+  // first screen: import sleep if present, then alarm-via-shortcut, else Sleep screen, else onboarding, else home
   const params=new URLSearchParams(location.search);
-  if(params.get('ring')==='1' || location.hash==='#ring'){ runtime.test=false; ring(); }
-  else if(ingestWatchSleep(params)){ renderWatchCard(); show('setup'); }
-  else if(!onboarded){ renderOnboard(0); show('onboard'); }
-  else { renderWatchCard(); }
+  const wantRing = params.get('ring')==='1' || location.hash==='#ring';
+  const hadSleep = hasSleepParams(params);
+  const imported = hadSleep ? ingestWatchSleep(params) : false;   // stores data + cleans the URL
+  renderWatchCard();
+  if(wantRing){ runtime.test=false; ring(); }
+  else if(hadSleep){ renderSleepScreen(imported?'ok':'empty'); show('sleep'); }
+  else if(!onboarded){ if(!tourSeen) startTour('onboard'); else { renderOnboard(0); show('onboard'); } }
 }
 let obData={name:'',ageBand:'13–17',readyTime:'08:00',routineMin:30,wake:'07:00',bedtime:'22:00',sleepH:9};
 function minsToHHMM(mins){ mins=((mins%1440)+1440)%1440; return `${String(Math.floor(mins/60)).padStart(2,'0')}:${String(mins%60).padStart(2,'0')}`; }
@@ -2232,6 +2417,37 @@ function computePlan(){
   obData.bedtime=minsToHHMM(inBedBy);
   obData.asleep=minsToHHMM(asleepBy);
 }
+const TOUR=[
+  {ic:'⏰', t:"An alarm you can't cheat", b:"Daybreak rings in the morning — but tapping “off” isn't enough. To actually silence it you have to <b>do something</b>: move, think, or get out of bed. The point is to get you <i>up</i>, not just awake."},
+  {ic:'🥊', t:'The Gauntlet', b:"When it rings, it throws you a <b>challenge</b>: push-ups or sit-ups (watched by the camera), “go touch grass”, make your bed, hunt down an object — or brain ones like math, memory and typing. Finish it and the alarm stops. <b>No skip button.</b>"},
+  {ic:'🔥', t:'Streaks', b:"Beat the alarm and that day joins your <b>streak</b>. Miss a day and it resets to zero — unless you've saved a <b>Streak Freeze</b>. The longer your streak, the more coins you earn each morning."},
+  {ic:'🪙', t:'Sun coins & the Shop', b:"Every morning you win (plus optional workouts) pays out <b>sun coins</b>. Spend them in the <b>Shop</b> on power-ups — Streak Freeze, Snooze Token, Easy Pass — or on looks: animated <b>sun skins</b> and color themes."},
+  {ic:'🌙', t:'Sleep tracking', b:"Tap <b>“Going to sleep”</b> at bedtime and Daybreak tracks how long you slept and gives you a <b>sleep score</b> in the morning. Got an Apple Watch? You can log its real sleep stages too."},
+  {ic:'🚀', t:'One important thing', b:"Daybreak only rings while it's <b>open on your phone</b>. So <b>also set your normal iPhone alarm</b> for the same time as a backup — that's your guaranteed wake-up, and Daybreak is the wall you climb to shut it off."},
+];
+function renderTour(step){
+  step=Math.max(0,Math.min(TOUR.length-1,step));
+  runtime.tourStep=step;
+  const t=TOUR[step], last=step===TOUR.length-1;
+  const dots=TOUR.map((_,i)=>`<span class="tdot${i===step?' on':''}"></span>`).join('');
+  $('#tourBody').innerHTML=`
+    <div class="tourIc">${t.ic}</div>
+    <div class="tourT">${t.t}</div>
+    <div class="tourB">${t.b}</div>
+    <div class="tdots">${dots}</div>
+    <div class="stack" style="margin-top:8px">
+      <button class="btn" id="tNext">${last?(runtime.tourReturn==='onboard'?'Set me up →':'Got it'):'Next →'}</button>
+      ${step>0?`<button class="tinybtn" id="tBack">← back</button>`:(runtime.tourReturn==='onboard'?`<button class="tinybtn" id="tSkip">skip intro</button>`:`<button class="tinybtn" id="tSkip">close</button>`)}
+    </div>`;
+  $('#tNext').onclick=()=>{ if(last) endTour(); else renderTour(step+1); };
+  const bk=$('#tBack'); if(bk) bk.onclick=()=>renderTour(step-1);
+  const sk=$('#tSkip'); if(sk) sk.onclick=endTour;
+}
+function endTour(){ tourSeen=true; save('tourSeen',true);
+  if(runtime.tourReturn==='onboard'){ renderOnboard(0); show('onboard'); }
+  else show('setup');
+}
+function startTour(returnTo){ runtime.tourReturn=returnTo||'setup'; renderTour(0); show('tour'); }
 function renderOnboard(step){
   const b=$('#obBody'); if(!b) return;
   if(step===0){
