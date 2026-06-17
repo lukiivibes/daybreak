@@ -1438,16 +1438,14 @@ async function poseChallenge(c){
     kp.forEach(p=>{ if(p.score>.3){ ctx.beginPath(); ctx.arc(p.x,p.y,Math.max(3,cv.width/130),0,7); ctx.fill(); }});
   }
   const ok2=(kp,i)=>kp[i]&&kp[i].score>.3;
-  function avgAngle(kp,a,b,d){ const A=[];
+  function avgAngle(kp,a,b){ const A=[];   // average the left + right joint angle (whichever sides are visible)
     if(ok2(kp,a[0])&&ok2(kp,a[1])&&ok2(kp,a[2])) A.push(ang(kp[a[0]],kp[a[1]],kp[a[2]]));
-    if(ok2(kp,d[0])&&ok2(kp,d[1])&&ok2(kp,d[2])) A.push(ang(kp[d[0]],kp[d[1]],kp[d[2]]));
+    if(b&&ok2(kp,b[0])&&ok2(kp,b[1])&&ok2(kp,b[2])) A.push(ang(kp[b[0]],kp[b[1]],kp[b[2]]));
     return A.length?A.reduce((x,y)=>x+y,0)/A.length:null; }
-  // body must be roughly straight (plank) to count a push-up — blocks knee push-ups / piking
+  // only reject an obvious knee push-up; if the legs aren't clearly visible, don't block the rep
   function bodyStraight(kp){
-    const hip=avgAngle(kp,[5,11,13],[6,12,14]);     // shoulder-hip-knee
     const knee=avgAngle(kp,[11,13,15],[12,14,16]);  // hip-knee-ankle
-    if(hip!==null && hip<150) return false;          // piking or knees-down breaks this line
-    if(knee!==null && knee<145) return false;        // bent knees = knee push-up
+    if(knee!==null && knee<100) return false;        // clearly bent knees = knee push-up
     return true;
   }
   function bank(){
@@ -1466,21 +1464,26 @@ async function poseChallenge(c){
     if(!running) return;
     draw(kp);
     if(mode==='situp'){
-      const hip=avgAngle(kp,[5,11,13],[6,12,14]);   // lying flat = open, crunched = closed
-      if(hip===null){ $('#poseHint').textContent="Can't see your torso — lie side-on, fully in frame."; }
-      else {
-        if(st==='up' && hip>115){ st='down'; $('#poseHint').textContent='Now crunch all the way up'; }
-        else if(st==='down' && hip<70 && now-lastRep>500){ st='up'; if(bank())return; }
+      const hip=avgAngle(kp,[5,11,13],[6,12,14]);   // lying flat = open (~150°), crunched = closed
+      if(hip===null){ $('#poseHint').textContent="Can't see your torso — lie side-on, whole body in frame."; }
+      else if(st==='up'){
+        if(hip>120){ st='down'; $('#poseHint').textContent='Good — now crunch all the way up'; }
+        else $('#poseHint').textContent=`Lie flat to start  ·  ${Math.round(hip)}°`;
+      } else {
+        if(hip<95 && now-lastRep>350){ st='up'; if(bank())return; }
+        else $('#poseHint').textContent=`Crunch up, chest to knees  ·  ${Math.round(hip)}°`;
       }
     } else {
-      const elbow=avgAngle(kp,[5,7,9],[6,8,10]);
-      if(elbow===null){ $('#poseHint').textContent="Can't see your arms — back up so your whole body is in frame."; }
-      else {
-        if(st==='up' && elbow<100){ st='down'; $('#poseHint').textContent='Down… now push back up'; }
-        else if(st==='down' && elbow>150 && now-lastRep>500){
-          if(!bodyStraight(kp)){ $('#poseHint').textContent='Straighten up — full push-ups only (no knees/piking)'; }
+      const elbow=avgAngle(kp,[5,7,9],[6,8,10]);     // straight arm ~170°, bent ~80°
+      if(elbow===null){ $('#poseHint').textContent="Can't see your arms — back up so your whole body shows."; }
+      else if(st==='up'){
+        if(elbow<110){ st='down'; $('#poseHint').textContent='Down… now push all the way up'; }
+        else $('#poseHint').textContent=`Lower your chest down  ·  ${Math.round(elbow)}°`;
+      } else {
+        if(elbow>150 && now-lastRep>350){
+          if(!bodyStraight(kp)){ $('#poseHint').textContent='Straighten your body — full push-ups, no knees'; }
           else { st='up'; if(bank())return; }
-        }
+        } else $('#poseHint').textContent=`Push all the way up  ·  ${Math.round(elbow)}°`;
       }
     }
   }
@@ -1670,8 +1673,12 @@ function ensureCocoLib(){
     cocoLibPromise=(async()=>{
       if(!window.tf) await loadScript('https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.20.0/dist/tf.min.js');
       if(!window.cocoSsd) await loadScript('https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.3/dist/coco-ssd.min.js');
+      try{ await window.tf.setBackend('webgl'); }catch(e){}
       try{ await window.tf.ready(); }catch(e){}
       cocoModel = await window.cocoSsd.load({base:'lite_mobilenet_v2'});
+      // warm up: run one throwaway detection so the WebGL shaders compile NOW (in the
+      // background while the camera is up) instead of lagging your first real capture
+      try{ const wc=document.createElement('canvas'); wc.width=wc.height=128; await cocoModel.detect(wc); }catch(e){}
       return !!cocoModel;
     })().catch(()=>{ cocoLibPromise=null; return false; });
   }
