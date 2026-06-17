@@ -270,6 +270,18 @@
   .tdots{display:flex;gap:7px;justify-content:center;margin:22px 0 4px}
   .tdot{width:7px;height:7px;border-radius:50%;background:rgba(255,244,230,.2);transition:all .25s}
   .tdot.on{background:var(--gold);width:20px;border-radius:4px}
+  /* ---- home declutter ---- */
+  .chiprow{display:flex;gap:8px;margin-top:14px}
+  .chip{flex:1;font-family:var(--ui);font-weight:600;font-size:12.5px;padding:12px 4px;border-radius:13px;cursor:pointer;background:rgba(255,244,230,.06);border:1px solid var(--line);color:var(--cream);white-space:nowrap}
+  .chip:active{transform:scale(.96);border-color:var(--coral)}
+  .testlink{display:block;margin:13px auto 2px;background:none;border:none;color:var(--dim);font-size:13px;cursor:pointer;font-family:var(--ui);text-decoration:underline;text-underline-offset:3px}
+  .advanced{margin-top:16px}
+  /* ---- good-night screen ---- */
+  .gnAlarm{font-size:16px;color:var(--dim);margin-top:8px}
+  .gnAlarm b{color:var(--gold);font-family:var(--display);font-weight:800;font-size:22px}
+  .gnList{margin-top:20px;text-align:left;display:flex;flex-direction:column;gap:12px}
+  .gnList div{display:flex;gap:11px;align-items:flex-start;font-size:14px;color:var(--cream);line-height:1.4}
+  .gnList span{flex:none;font-size:18px;line-height:1.2}
   .lifestats{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:14px}
   .ls{background:rgba(255,244,230,.05);border:1px solid var(--line);border-radius:12px;padding:10px 12px;text-align:center}
   .ls b{font-family:var(--display);font-weight:800;font-size:20px;display:block;line-height:1}
@@ -538,32 +550,18 @@
       <div class="note" style="margin-top:8px">Each snooze is shorter than the last and you'll solve a math problem to earn it. Set to 0 for hard mode. Math level also sets the difficulty of the Brain wake-up challenge.</div>
     </div>
 
-    <button class="btn" id="sleepBtn">🌙 Going to sleep (arm + track)</button>
-    <label class="nopt"><input type="checkbox" id="noiseOpt" /> <span>🎙️ Listen for snoring &amp; noise while I sleep <small>uses the mic · never records audio</small></span></label>
-    <button class="btn ghost" id="armBtn" style="margin-top:10px">Arm alarm only</button>
-    <button class="btn ghost" id="testBtn" style="margin-top:10px">Test it now →</button>
-    <button class="btn ghost" id="workoutBtn" style="margin-top:10px">💪 Workout for coins (3–5 each)</button>
-    <button class="btn ghost" id="sleepStatsBtn" style="margin-top:10px">🌙 Sleep stats &amp; history →</button>
-    <button class="btn ghost" id="helpBtn" style="margin-top:10px">❓ How Daybreak works</button>
+    <button class="btn" id="sleepBtn">🌙 Going to sleep</button>
+    <button class="btn ghost" id="armBtn" style="margin-top:10px">⏰ Arm alarm only</button>
 
-    <details class="logWatch" id="logWatch">
-      <summary>⌚ Log last night's Apple Watch sleep</summary>
-      <div class="body">
-        <div class="note" style="margin-top:0">Open the <b>Health</b> app → <b>Sleep</b> → last night, and type the minutes here. Fill the stages for a full breakdown, or just the total.</div>
-        <div class="wmGrid">
-          <label>Deep<input type="number" id="wmDeep" inputmode="numeric" min="0" placeholder="min" /></label>
-          <label>Core<input type="number" id="wmCore" inputmode="numeric" min="0" placeholder="min" /></label>
-          <label>REM<input type="number" id="wmRem" inputmode="numeric" min="0" placeholder="min" /></label>
-          <label>Awake<input type="number" id="wmAwake" inputmode="numeric" min="0" placeholder="min" /></label>
-        </div>
-        <div class="wmOr">— or just —</div>
-        <label class="wmTotalRow">Total asleep<input type="number" id="wmTotal" inputmode="numeric" min="0" placeholder="minutes" /></label>
-        <button class="btn" id="wmSave" style="margin-top:12px">Save last night</button>
-      </div>
-    </details>
+    <div class="chiprow">
+      <button class="chip" id="workoutBtn">💪 Workout</button>
+      <button class="chip" id="sleepStatsBtn">🌙 Sleep</button>
+      <button class="chip" id="helpBtn">❓ How it works</button>
+    </div>
+    <button class="testlink" id="testBtn">Test the alarm right now →</button>
 
-    <details>
-      <summary>⚡ Auto-open when your phone alarm rings (iPhone)</summary>
+    <details class="advanced">
+      <summary>⚙️ Auto-open with your iPhone alarm</summary>
       <div class="body">
         <ol>
           <li>Open the <b>Shortcuts</b> app → <b>Automation</b> → <b>＋</b></li>
@@ -574,7 +572,28 @@
         Also: tap Share → <b>Add to Home Screen</b> so Daybreak opens fullscreen like a real app.
       </div>
     </details>
-    <div class="footnote">Heads up: a web page can't ring while it's closed, so keep your phone's normal alarm as the trigger — Daybreak is the gate you have to pass to shut it up.</div>
+    <div class="footnote">A web page can't ring while it's closed — keep your phone's normal alarm as the trigger. Daybreak is the gate you have to pass to shut it off.</div>
+  </section>
+
+  <!-- ========== GOOD NIGHT (confirmation before sleep) ========== -->
+  <section id="s-goodnight" class="screen">
+    <div class="orbwrap" style="justify-content:flex-start;padding-top:7vh">
+      <div style="width:100%;max-width:380px;text-align:center">
+        <div class="tourIc">🌙</div>
+        <div class="tourT">Good night<span id="gnName"></span></div>
+        <div class="gnAlarm">Alarm set for <b id="gnTime">8:00 AM</b></div>
+        <div class="gnList">
+          <div><span>😴</span> Sleep tracking is on — you'll get a score when you wake up</div>
+          <div><span>🔆</span> Your screen dims but stays on so the alarm can ring</div>
+          <div><span>🔌</span> Keep Daybreak open and plugged in</div>
+        </div>
+        <label class="nopt" style="max-width:340px;margin:18px auto 0"><input type="checkbox" id="gnNoise" /> <span>🎙️ Listen for snoring &amp; noise tonight <small>mic · never records audio</small></span></label>
+        <div class="stack" style="margin-top:18px">
+          <button class="btn" id="gnStart">😴 Start sleep — dim the screen</button>
+          <button class="tinybtn" id="gnCancel">cancel</button>
+        </div>
+      </div>
+    </div>
   </section>
 
   <!-- ========== ARMED ========== -->
@@ -769,7 +788,7 @@ let runtime = {snoozeUsed:0, snoozeMins:[5,3,1], active:null, ringTimer:null};
 
 /* ===================== helpers ===================== */
 const $ = s=>document.querySelector(s);
-const screens = ['onboard','tour','setup','armed','ringing','math','challenge','success','shop','sleep'];
+const screens = ['onboard','tour','setup','goodnight','armed','ringing','math','challenge','success','shop','sleep'];
 function show(name){
   screens.forEach(s=>$('#s-'+s).classList.toggle('active', s===name));
 }
@@ -988,19 +1007,26 @@ function arm(){
   show('armed');
   scheduleTick();
 }
-function goToSleep(){
+function openGoodnight(){
   settings.time = $('#alarmTime').value || '07:00';
+  save('settings',settings);
+  $('#gnTime').textContent = fmt(settings.time);
+  $('#gnName').textContent = userName ? `, ${userName}` : '';
+  const gn=$('#gnNoise'); if(gn) gn.checked = noiseOptIn;
+  show('goodnight');
+}
+function startSleep(){
+  const gn=$('#gnNoise'); if(gn){ noiseOptIn=gn.checked; save('noiseOptIn',noiseOptIn); }
   runtime.test=false;
   sleepStart=Date.now();           // remember bedtime for the sleep score
   save('sleepStart',sleepStart); save('settings',settings);
   $('#armedTime').textContent=fmt(settings.time);
   const now=new Date();
-  $('#armedSleep').textContent=`😴 sleep tracking on · in bed at ${fmt(`${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`)}`;
+  $('#armedSleep').textContent=`😴 sleep tracking on · since ${fmt(`${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`)}`;
   show('armed');
   scheduleTick();
   enterNight();
   if(noiseOptIn){ startNoise(); $('#armedSleep').textContent += ' · 🎙️ listening'; }
-  toast(userName?`Good night, ${userName} 🌙`:'Good night 🌙');
 }
 // duration-based sleep score (no wearable needed): how close your sleep was to the healthy range for your age
 function scoreSleep(estMin){
@@ -1093,9 +1119,8 @@ function saveWatchManual(){
   const ok=applyWatchSleep({ deep, core, rem, awake, asleep: anyStage?null:v('#wmTotal') });
   if(!ok){ toast('Type in at least one number first'); return; }
   renderWatchCard(); refreshStats();
-  ['#wmDeep','#wmCore','#wmRem','#wmAwake','#wmTotal'].forEach(s=>{ if($(s)) $(s).value=''; });
-  const dt=$('#logWatch'); if(dt) dt.open=false;
-  toast('Logged from Apple Watch ⌚');
+  if($('#s-sleep') && $('#s-sleep').classList.contains('active')) renderSleepScreen(null);
+  toast('Logged ⌚');
 }
 function fmtDur(mins){ mins=Math.round(mins||0); const h=Math.floor(mins/60), m=mins%60; return h?`${h}h ${m}m`:`${m}m`; }
 function watchBreakdownHTML(w){
@@ -1152,9 +1177,23 @@ function renderSleepScreen(status){
     const avg=Math.round(sleepLog.reduce((a,b)=>a+(b.score||0),0)/sleepLog.length);
     html+=`<div class="card"><div class="cardh">Sleep score history</div><div class="bars">${bars}</div><div class="sleepavg">Average <b>${avg}</b> · ${sleepLog.length} night${sleepLog.length>1?'s':''} tracked</div></div>`;
   }
-  html+=`<button class="btn ghost" id="sleepLogBtn">⌚ Log Apple Watch sleep</button>`;
+  html+=`<details class="logWatch" id="logWatch"${watchSleep?'':' open'}>
+      <summary>⌚ Log / edit last night by hand</summary>
+      <div class="body">
+        <div class="note" style="margin-top:0">From the <b>Health</b> app → <b>Sleep</b> → last night, type the minutes. Fill the stages for a full breakdown, or just the total.</div>
+        <div class="wmGrid">
+          <label>Deep<input type="number" id="wmDeep" inputmode="numeric" min="0" placeholder="min" /></label>
+          <label>Core<input type="number" id="wmCore" inputmode="numeric" min="0" placeholder="min" /></label>
+          <label>REM<input type="number" id="wmRem" inputmode="numeric" min="0" placeholder="min" /></label>
+          <label>Awake<input type="number" id="wmAwake" inputmode="numeric" min="0" placeholder="min" /></label>
+        </div>
+        <div class="wmOr">— or just —</div>
+        <label class="wmTotalRow">Total asleep<input type="number" id="wmTotal" inputmode="numeric" min="0" placeholder="minutes" /></label>
+        <button class="btn" id="wmSave" style="margin-top:12px">Save last night</button>
+      </div>
+    </details>`;
   el.innerHTML=html;
-  const lb=$('#sleepLogBtn'); if(lb) lb.onclick=()=>{ show('setup'); const d=$('#logWatch'); if(d){ d.open=true; d.scrollIntoView({behavior:'smooth'}); } };
+  const wmb=$('#wmSave'); if(wmb) wmb.onclick=saveWatchManual;
 }
 function scheduleTick(){
   clearInterval(runtime.ringTimer);
@@ -1442,10 +1481,13 @@ async function poseChallenge(c){
     if(ok2(kp,a[0])&&ok2(kp,a[1])&&ok2(kp,a[2])) A.push(ang(kp[a[0]],kp[a[1]],kp[a[2]]));
     if(b&&ok2(kp,b[0])&&ok2(kp,b[1])&&ok2(kp,b[2])) A.push(ang(kp[b[0]],kp[b[1]],kp[b[2]]));
     return A.length?A.reduce((x,y)=>x+y,0)/A.length:null; }
-  // only reject an obvious knee push-up; if the legs aren't clearly visible, don't block the rep
+  // a real push-up is one straight line shoulder→hip→knee→ankle. Require the legs to be
+  // visible AND straight, which blocks knee push-ups (and "lying down and bobbing").
   function bodyStraight(kp){
+    const hip=avgAngle(kp,[5,11,13],[6,12,14]);     // shoulder-hip-knee
     const knee=avgAngle(kp,[11,13,15],[12,14,16]);  // hip-knee-ankle
-    if(knee!==null && knee<100) return false;        // clearly bent knees = knee push-up
+    if(hip===null || hip<150) return false;          // torso/hips must form a straight plank
+    if(knee===null || knee<150) return false;        // legs must be straight AND in frame → no knees
     return true;
   }
   function bank(){
@@ -2125,7 +2167,7 @@ function dealRow(d){
   return `<div class="shopitem rb-${it.rarity||'common'} ${d.rare?'rare':''}"><div class="ico">${it.icon}</div>
     <div class="info"><div class="iname">${it.name} ${rarityTag(it.rarity)} <span class="deal">−${d.pct}%</span></div>
     <div class="idesc">${it.desc}</div></div>
-    <div class="acts"><button class="prevbtn" data-preview="${it.id}">👁 Preview</button>${action}</div></div>`;
+    <div class="acts"><button class="prevbtn" data-preview="${it.id}" data-pprice="${price}">👁 Preview</button>${action}</div></div>`;
 }
 function msToMidnight(){ const n=new Date(), m=new Date(n); m.setHours(24,0,0,0); return m-n; }
 function fmtReset(){ const ms=msToMidnight(), h=Math.floor(ms/3.6e6), m=Math.floor(ms%3.6e6/6e4); return `resets in ${h}h ${m}m`; }
@@ -2183,7 +2225,7 @@ function renderShop(){
   wrap.querySelectorAll('[data-buy]').forEach(b=>b.onclick=()=>buyItem(b.dataset.buy));
   wrap.querySelectorAll('[data-deal]').forEach(b=>b.onclick=()=>buyItem(b.dataset.deal, +b.dataset.price));
   wrap.querySelectorAll('[data-equip]').forEach(b=>b.onclick=()=>equipItem(b.dataset.equip));
-  wrap.querySelectorAll('[data-preview]').forEach(b=>b.onclick=()=>openPreview(b.dataset.preview));
+  wrap.querySelectorAll('[data-preview]').forEach(b=>b.onclick=()=>openPreview(b.dataset.preview, b.dataset.pprice!=null? +b.dataset.pprice : undefined));
   const ni=$('#nameInput'); if(ni) ni.onchange=async()=>{ userName=ni.value.trim().slice(0,16); await persistProgress(); refreshStats(); toast(userName?`Hey ${userName} 👋`:'Name cleared'); };
   const pb=$('#prestigeBtn'); if(pb && streak>=30) pb.onclick=()=>doPrestige();
 }
@@ -2197,8 +2239,11 @@ function mockHTML(t, skinId){
     <div class="pmTime">7:00 AM</div>
   </div>`;
 }
-function openPreview(id){
+function openPreview(id, dealPrice){
   const it=findItem(id); if(!it) return;
+  const eff = (dealPrice!=null) ? dealPrice : it.cost;        // discounted price if this came from a Daily Deal
+  const short = coins < eff;
+  const buyBtn = `<button class="modalbtn" id="previewBuy" ${short?'disabled':''}>${short?`Need 🪙 ${eff} · you have 🪙 ${coins}`:`Buy 🪙 ${eff}${dealPrice!=null?' · deal':''}`}</button>`;
   const b=$('#previewBody'); let html='';
   const owns=ownsItem(it);
   if(it.kind==='theme'){
@@ -2225,17 +2270,17 @@ function openPreview(id){
     html=`<h3>${it.icon} ${it.name}</h3><div class="previewGlyph" style="margin:14px 0">${it.icon}</div><p>${it.desc}</p>`;
   }
   // action inside the modal
-  if(!owns && it.kind!=='theme' && it.kind!=='sun' && it.kind!=='customsound') html+=`<button class="modalbtn" id="previewBuy" ${coins<it.cost?'disabled':''}>${coins<it.cost?'Need more coins':'Buy 🪙 '+it.cost}</button>`;
-  else if(it.kind==='customsound' && !owns) html+=`<button class="modalbtn" id="previewBuy" ${coins<it.cost?'disabled':''}>${coins<it.cost?'Need more coins':'Buy 🪙 '+it.cost}</button>`;
+  if(!owns && it.kind!=='theme' && it.kind!=='sun' && it.kind!=='customsound') html+=buyBtn;
+  else if(it.kind==='customsound' && !owns) html+=buyBtn;
   else if(it.kind==='theme'||it.kind==='sun'){
     const equipped = (it.kind==='theme'?equipTheme===it.val:equipSun===it.val);
     if(equipped) html+=`<button class="modalbtn" disabled>Equipped</button>`;
     else if(owns) html+=`<button class="modalbtn" id="previewEquip">Equip</button>`;
-    else html+=`<button class="modalbtn" id="previewBuy" ${coins<it.cost?'disabled':''}>${coins<it.cost?'Need more coins':'Buy 🪙 '+it.cost}</button>`;
+    else html+=buyBtn;
   }
   b.innerHTML=html;
   $('#previewModal').classList.add('show');
-  const pb=$('#previewBuy'); if(pb) pb.onclick=async()=>{ await buyItem(it.id); closePreview(); };
+  const pb=$('#previewBuy'); if(pb) pb.onclick=async()=>{ await buyItem(it.id, dealPrice); closePreview(); };
   const pe=$('#previewEquip'); if(pe) pe.onclick=()=>{ equipItem(`${it.kind}:${it.val}`); closePreview(); };
   const ps=$('#previewSound'); if(ps) ps.onclick=(e)=>{ e.stopPropagation(); playSkinSound(it.val); };
   const cf=$('#customFile'); if(cf) cf.onchange=onCustomFile;
@@ -2371,9 +2416,9 @@ async function init(){
   setInterval(()=>{ const e=$('#dealReset'); if(e && $('#s-shop').classList.contains('active')) e.textContent=fmtReset(); }, 30000);
 
   $('#armBtn').onclick=arm;
-  $('#sleepBtn').onclick=goToSleep;
-  const no=$('#noiseOpt'); if(no){ no.checked=noiseOptIn; no.onchange=()=>{ noiseOptIn=no.checked; save('noiseOptIn',noiseOptIn); toast(noiseOptIn?'Noise tracking on for tonight':'Noise tracking off'); }; }
-  if($('#wmSave')) $('#wmSave').onclick=saveWatchManual;
+  $('#sleepBtn').onclick=openGoodnight;
+  if($('#gnStart')) $('#gnStart').onclick=startSleep;
+  if($('#gnCancel')) $('#gnCancel').onclick=()=>show('setup');
   $('#testBtn').onclick=()=>{ settings.time=$('#alarmTime').value; runtime.test=true; ring(); };
   $('#workoutBtn').onclick=startWorkout;
   if($('#sleepStatsBtn')) $('#sleepStatsBtn').onclick=()=>{ renderSleepScreen(null); show('sleep'); };
