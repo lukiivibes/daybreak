@@ -285,6 +285,8 @@
   .gnList{margin-top:20px;text-align:left;display:flex;flex-direction:column;gap:12px}
   .gnList div{display:flex;gap:11px;align-items:flex-start;font-size:14px;color:var(--cream);line-height:1.4}
   .gnList span{flex:none;font-size:18px;line-height:1.2}
+  .dlbtn{display:block;text-align:center;background:linear-gradient(135deg,var(--gold),var(--coral));color:#1a1430;font-weight:800;font-family:var(--ui);text-decoration:none;padding:13px;border-radius:14px;margin-top:6px;font-size:14.5px}
+  .dlbtn:active{transform:scale(.98)}
   .lifestats{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:14px}
   .ls{background:rgba(255,244,230,.05);border:1px solid var(--line);border-radius:12px;padding:10px 12px;text-align:center}
   .ls b{font-family:var(--display);font-weight:800;font-size:20px;display:block;line-height:1}
@@ -564,7 +566,23 @@
     <button class="testlink" id="testBtn">Test the alarm right now →</button>
 
     <details class="advanced">
-      <summary>⚙️ Auto-open with your iPhone alarm</summary>
+      <summary>⌚ Auto-import your Apple Watch sleep</summary>
+      <div class="body">
+        <p>Want your real Deep / Core / REM stages every morning without typing? Grab the ready-made Shortcut:</p>
+        <a class="dlbtn" href="https://www.icloud.com/shortcuts/8b1742129b5744d7b28b9c77afebd81c" target="_blank" rel="noopener">📲 Get the Sleep-Tracking Shortcut</a>
+        <p style="margin-top:12px">Then make it run on its own each morning:</p>
+        <ol>
+          <li>Open the <b>Shortcuts</b> app → <b>Automation</b> tab → <b>＋</b> (top right)</li>
+          <li>Choose <b>Alarm</b> → set <b>Is Stopped</b> → <b>Next</b></li>
+          <li>Tap <b>Run Shortcut</b> → pick the <b>Daybreak Stages</b> shortcut you just added</li>
+          <li>On the last screen turn on <b>Run Immediately</b> (so it doesn't ask first)</li>
+        </ol>
+        <p>Now when your phone alarm goes off and you stop it, Daybreak opens, you do your challenge, and your sleep stages are waiting after. Make sure the Shortcut's link ends with <code>&amp;ring=1</code> so the alarm/challenge runs first.</p>
+      </div>
+    </details>
+
+    <details class="advanced">
+      <summary>⚡ Auto-open when your iPhone alarm rings</summary>
       <div class="body">
         <ol>
           <li>Open the <b>Shortcuts</b> app → <b>Automation</b> → <b>＋</b></li>
@@ -665,7 +683,8 @@
       <div class="wakestats" id="successStats"></div>
       <div class="streak" style="margin-top:14px;font-size:16px">🔥 <b id="streakNum3">1</b> day streak · 🪙 <b id="cCoins2">0</b></div>
       <div class="stack">
-        <button class="btn" id="doneBtn">Done</button>
+        <button class="btn" id="successSleepBtn" style="display:none">🌙 See last night's sleep →</button>
+        <button class="btn ghost" id="doneBtn">Done</button>
       </div>
     </div>
   </section>
@@ -1136,7 +1155,7 @@ function watchBreakdownHTML(w){
   let bar='', legend='';
   if(hasStages){
     bar = segs.filter(s=>s[1]).map(s=>`<i style="width:${(s[1]/total*100).toFixed(1)}%;background:${s[2]}"></i>`).join('');
-    legend = segs.filter(s=>s[1]!=null).map(s=>`<span><b style="background:${s[2]}"></b>${s[0]} ${fmtDur(s[1])}</span>`).join('');
+    legend = segs.filter(s=>s[1]!=null).map(s=>`<span><b style="background:${s[2]}"></b>${s[0]} ${fmtDur(s[1])} · ${Math.round((s[1]||0)/total*100)}%</span>`).join('');
   }
   const dr = (w.deep!=null&&w.rem!=null&&asleep) ? `Deep + REM were ${Math.round((w.deep+w.rem)/asleep*100)}% of your sleep — that's the restorative stuff.` : '';
   return `<div class="wcBody">
@@ -1967,6 +1986,7 @@ async function succeed(c){
     $('#successNote').textContent = `Test run — streak & coins untouched`;
     renderSunInto($('#successOrb'), equipSun);
     if($('#sleepScore')) $('#sleepScore').style.display='none';
+    if($('#successSleepBtn')) $('#successSleepBtn').style.display='none';
     renderWakeStats();
     refreshStats();
     exitNight();
@@ -2029,6 +2049,7 @@ async function succeed(c){
   renderWakeStats();
   refreshStats();
   exitNight();
+  if($('#successSleepBtn')) $('#successSleepBtn').style.display = (runtime.sleepAfterWake || (watchSleep && watchSleep.d===dayKey())) ? 'block' : 'none';
   navigator.vibrate&&navigator.vibrate([60,40,60]);
   show('success');
 }
@@ -2435,7 +2456,8 @@ async function init(){
   $('#mathSubmit').onclick=submitMath;
   $('#mathA').addEventListener('keydown',e=>{ if(e.key==='Enter') submitMath(); });
   $('#mathCancel').onclick=()=>{ show('ringing'); startAlarm(); };
-  $('#doneBtn').onclick=()=>{ setDawn(0); exitNight(); show('setup'); };
+  $('#doneBtn').onclick=()=>{ setDawn(0); exitNight(); runtime.sleepAfterWake=false; show('setup'); };
+  if($('#successSleepBtn')) $('#successSleepBtn').onclick=()=>{ runtime.sleepAfterWake=false; renderSleepScreen('ok'); show('sleep'); };
   // iOS releases the screen lock when the tab is hidden — grab it again when we come back
   document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState==='visible' && nightOn) requestWake(); });
 
@@ -2451,6 +2473,7 @@ async function init(){
   const hadSleep = hasSleepParams(params);
   const imported = hadSleep ? ingestWatchSleep(params) : false;   // stores data + cleans the URL
   renderWatchCard();
+  if(wantRing && imported) runtime.sleepAfterWake=true;           // show the stage breakdown once they're up
   if(wantRing){ runtime.test=false; ring(); }
   else if(hadSleep){ renderSleepScreen(imported?'ok':'empty'); show('sleep'); }
   else if(!onboarded){ if(!tourSeen) startTour('onboard'); else { renderOnboard(0); show('onboard'); } }
