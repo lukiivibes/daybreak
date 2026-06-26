@@ -85,7 +85,7 @@
     text-align:center;letter-spacing:-.03em;outline:none;width:auto;font-variant-numeric:tabular-nums}
   input[type=time]::-webkit-calendar-picker-indicator{filter:invert(.8);opacity:.4;cursor:pointer}
 
-  .card{background:rgba(255,244,230,.04);border:1px solid var(--line);border-radius:20px;padding:18px;margin-bottom:14px}
+  .card{background:rgba(12,9,30,.62);border:1px solid var(--line);border-radius:20px;padding:18px;margin-bottom:14px}
   .card h3{font-family:var(--display);font-weight:600;font-size:16px;margin-bottom:4px}
   .card .note{font-size:12.5px;color:var(--dim);line-height:1.45}
 
@@ -203,7 +203,7 @@
   .ws{display:flex;justify-content:space-between;gap:12px;font-size:13px;background:rgba(255,244,230,.05);border:1px solid var(--line);border-radius:12px;padding:9px 13px}
   .ws span{color:var(--dim)}
   .ws b{color:var(--cream);text-align:right;font-weight:600}
-  .sleepscore{display:flex;flex-direction:column;align-items:stretch;gap:0;max-width:340px;margin:16px auto 0;background:rgba(255,244,230,.05);border:1px solid var(--line);border-radius:18px;padding:14px}
+  .sleepscore{display:flex;flex-direction:column;align-items:stretch;gap:0;max-width:340px;margin:16px auto 0;background:rgba(12,9,30,.62);border:1px solid var(--line);border-radius:18px;padding:14px}
   .scoreTop{display:flex;align-items:center;gap:16px}
   .scoreRing{flex:none;width:84px;height:84px;border-radius:50%;display:grid;place-items:center;
     background:conic-gradient(var(--col) calc(var(--pct)*1%), rgba(255,244,230,.12) 0);position:relative}
@@ -294,9 +294,9 @@
   .charts{margin-top:6px}
   .charttitle{font-size:10.5px;color:var(--dim);font-weight:700;text-transform:uppercase;letter-spacing:.1em;margin:16px 0 9px}
   .emptychart{font-size:12.5px;color:var(--dim);background:rgba(255,244,230,.05);border:1px solid var(--line);border-radius:12px;padding:14px;text-align:center}
-  .bars{display:flex;align-items:flex-end;gap:6px;height:96px}
+  .bars{display:flex;align-items:flex-end;gap:8px;height:96px;justify-content:center}
   .bars.short{height:64px}
-  .barwrap{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;height:100%;justify-content:flex-end}
+  .barwrap{flex:1 1 0;max-width:64px;display:flex;flex-direction:column;align-items:center;gap:4px;height:100%;justify-content:flex-end}
   .bar{width:100%;border-radius:5px 5px 0 0;background:linear-gradient(180deg,var(--gold),var(--coral));min-height:4px}
   .bar.off{background:rgba(255,244,230,.12)}
   .barlbl{font-size:8px;color:var(--dim)}
