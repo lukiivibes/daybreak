@@ -138,7 +138,7 @@
   .promptsub{color:var(--dim);font-size:14px;line-height:1.5;max-width:30ch}
 
   /* camera */
-  video,.shot{width:min(78vw,320px);aspect-ratio:3/4;object-fit:cover;border-radius:22px;background:#000;border:1px solid var(--line)}
+  video,.shot{width:min(74vw,300px);aspect-ratio:3/4;max-height:42vh;object-fit:cover;border-radius:22px;background:#000;border:1px solid var(--line)}
   .hidden{display:none!important}
 
   /* progress bar */
@@ -1793,30 +1793,25 @@ async function cameraChallenge(c){
       <button class="tinybtn" id="noCam" style="color:var(--coral)">📷 camera not working? do a no-camera one</button>
     </div>`;
   show('challenge');
-  $('#bail2').onclick=()=>{ stopCam(); startChallenge(); };
-  $('#noCam').onclick=()=>{ stopCam(); tapChallenge(CHALLENGES.find(x=>x.id==='tap'), 'No camera — tap your way out instead'); };
-
-  try{
-    stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}});
-    $('#cam').srcObject=stream;
-    await ($('#cam').play&&$('#cam').play().catch(()=>{}));
-  }catch(e){
-    tapChallenge(CHALLENGES.find(x=>x.id==='tap'), "Camera's off — tap your way out instead");
-    return;
-  }
-  // warm up the detector in the background so the first check is fast (skip for the grass heuristic)
-  if(c.id!=='grass') ensureCocoLib();
 
   const toMath=(why)=>{ stopCam(); toast(why); mathChallenge(CHALLENGES.find(x=>x.id==='math')); };
 
+  // Wire EVERY button up front (before any await) so taps always work even while the
+  // camera is still starting or the AI model is loading.
+  $('#bail2').onclick=()=>{ stopCam(); startChallenge(); };
+  $('#noCam').onclick=()=>{ stopCam(); tapChallenge(CHALLENGES.find(x=>x.id==='tap'), 'No camera — tap your way out instead'); };
+  $('#retake').onclick=()=>{ $('#shot').classList.add('hidden'); $('#cam').classList.remove('hidden');
+    $('#snap').hidden=false; $('#retake').hidden=true; $('#verdict').textContent=''; $('#verdict').className='verdict'; setDawn(0); };
   $('#snap').onclick=async()=>{
-    const v=$('#cam'); const cv=document.createElement('canvas');
+    const v=$('#cam');
+    if(!stream || !v.videoWidth){ toast('Camera still warming up — one sec'); return; }
+    const cv=document.createElement('canvas');
     cv.width=v.videoWidth||480; cv.height=v.videoHeight||640;
     cv.getContext('2d').drawImage(v,0,0,cv.width,cv.height);
     $('#shot').src=cv.toDataURL('image/jpeg',.8);
     $('#shot').classList.remove('hidden'); v.classList.add('hidden');
     $('#snap').hidden=true;
-    const vd=$('#verdict'); vd.className='verdict checking'; vd.textContent='🔍 Checking your photo…';
+    const vd=$('#verdict'); vd.className='verdict checking'; vd.textContent='🔍 Checking your photo… (first time can take a few seconds)';
 
     let res;
     try{ res=await Promise.race([ verifyCapture(c,cv,obj), new Promise(r=>setTimeout(()=>r({pass:null,timeout:true}),15000)) ]); }
@@ -1831,7 +1826,6 @@ async function cameraChallenge(c){
     if(res.pass===null){
       return toMath(res.timeout?'Photo checker took too long — quick math instead':"Couldn't run the photo checker — quick math instead");
     }
-    // failed verification
     fails++;
     vd.className='verdict fail';
     vd.innerHTML=`✗ ${res.msg||'That doesn’t match.'}${res.labels&&res.labels.length?`<br><small>I saw: ${res.labels.join(', ')}</small>`:''}`;
@@ -1839,8 +1833,17 @@ async function cameraChallenge(c){
     if(fails>=3){ return toMath('No worries — quick math one instead'); }
     $('#retake').hidden=false;
   };
-  $('#retake').onclick=()=>{ $('#shot').classList.add('hidden'); $('#cam').classList.remove('hidden');
-    $('#snap').hidden=false; $('#retake').hidden=true; $('#verdict').textContent=''; $('#verdict').className='verdict'; setDawn(0); };
+
+  try{
+    stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}});
+    $('#cam').srcObject=stream;
+    if($('#cam').play) $('#cam').play().catch(()=>{});   // don't await — never let playback stall the screen
+  }catch(e){
+    tapChallenge(CHALLENGES.find(x=>x.id==='tap'), "Camera's off — tap your way out instead");
+    return;
+  }
+  // warm up the detector AFTER the screen is interactive, so the load can't freeze the buttons
+  if(c.id!=='grass') setTimeout(()=>{ if(stream) ensureCocoLib(); }, 500);
 }
 function stopCam(){ if(stream){ stream.getTracks().forEach(t=>t.stop()); stream=null; } }
 
